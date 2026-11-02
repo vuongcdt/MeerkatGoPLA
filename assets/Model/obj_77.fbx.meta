@@ -1,0 +1,175 @@
+{
+  "ver": "2.3.14",
+  "importer": "fbx",
+  "imported": true,
+  "uuid": "0bfb7343-7eb0-48dc-9bad-e3fe7e2c111f",
+  "files": [],
+  "subMetas": {
+    "002de": {
+      "importer": "gltf-mesh",
+      "uuid": "0bfb7343-7eb0-48dc-9bad-e3fe7e2c111f@002de",
+      "displayName": "",
+      "id": "002de",
+      "name": "Wedding_03_Whole.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 2750
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "495d4": {
+      "importer": "gltf-material",
+      "uuid": "0bfb7343-7eb0-48dc-9bad-e3fe7e2c111f@495d4",
+      "displayName": "",
+      "id": "495d4",
+      "name": "cake_mtl.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "8e170": {
+      "importer": "gltf-scene",
+      "uuid": "0bfb7343-7eb0-48dc-9bad-e3fe7e2c111f@8e170",
+      "displayName": "",
+      "id": "8e170",
+      "name": "obj_77.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [],
+    "fbx": {
+      "smartMaterialEnabled": true
+    },
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "0bfb7343-7eb0-48dc-9bad-e3fe7e2c111f@002de"
+      ],
+      "skeletons": [],
+      "textures": [],
+      "materials": [
+        "0bfb7343-7eb0-48dc-9bad-e3fe7e2c111f@495d4"
+      ],
+      "scenes": [
+        "0bfb7343-7eb0-48dc-9bad-e3fe7e2c111f@8e170"
+      ]
+    },
+    "materials": {
+      "0bfb7343-7eb0-48dc-9bad-e3fe7e2c111f@495d4": {
+        "__type__": "cc.Material",
+        "_name": "",
+        "_objFlags": 0,
+        "__editorExtras__": {},
+        "_native": "",
+        "_effectAsset": {
+          "__uuid__": "f648964e-8d32-41fc-9ac9-7a1e714dd17b",
+          "__expectedType__": "cc.EffectAsset"
+        },
+        "_techIdx": 0,
+        "_defines": [
+          {
+            "DCC_APP_NAME": 5,
+            "USE_ALBEDO_MAP": true
+          },
+          {},
+          {},
+          {}
+        ],
+        "_states": [
+          {
+            "rasterizerState": {},
+            "depthStencilState": {},
+            "blendState": {
+              "targets": [
+                {}
+              ]
+            }
+          },
+          {
+            "rasterizerState": {},
+            "depthStencilState": {},
+            "blendState": {
+              "targets": [
+                {}
+              ]
+            }
+          },
+          {
+            "rasterizerState": {},
+            "depthStencilState": {},
+            "blendState": {
+              "targets": [
+                {}
+              ]
+            }
+          },
+          {
+            "rasterizerState": {},
+            "depthStencilState": {},
+            "blendState": {
+              "targets": [
+                {}
+              ]
+            }
+          }
+        ],
+        "_props": [
+          {
+            "mainTexture": {
+              "__uuid__": "ff1302c7-1add-414a-b2c7-bd7d1de1fc7c@6c48a",
+              "__expectedType__": "cc.Texture2D"
+            },
+            "mainColor": {
+              "__type__": "cc.Color",
+              "r": 188,
+              "g": 188,
+              "b": 188,
+              "a": 255
+            }
+          },
+          {},
+          {},
+          {}
+        ]
+      }
+    }
+  }
+}

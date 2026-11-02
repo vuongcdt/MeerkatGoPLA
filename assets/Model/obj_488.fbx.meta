@@ -1,0 +1,146 @@
+{
+  "ver": "2.3.14",
+  "importer": "fbx",
+  "imported": true,
+  "uuid": "721dc0e2-c167-46c5-b845-aa9d6b3e89fa",
+  "files": [],
+  "subMetas": {
+    "49010": {
+      "importer": "gltf-embeded-image",
+      "uuid": "721dc0e2-c167-46c5-b845-aa9d6b3e89fa@49010",
+      "displayName": "",
+      "id": "49010",
+      "name": "file10.image",
+      "userData": {
+        "gltfIndex": 0,
+        "fixAlphaTransparencyArtifacts": true,
+        "hasAlpha": false,
+        "type": "texture"
+      },
+      "ver": "1.0.3",
+      "imported": true,
+      "files": [
+        ".json",
+        ".png"
+      ],
+      "subMetas": {}
+    },
+    "4bfc4": {
+      "importer": "gltf-mesh",
+      "uuid": "721dc0e2-c167-46c5-b845-aa9d6b3e89fa@4bfc4",
+      "displayName": "",
+      "id": "4bfc4",
+      "name": "Burger_Wrapped_W_Blue_Changed.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 18810
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "a39a5": {
+      "importer": "texture",
+      "uuid": "721dc0e2-c167-46c5-b845-aa9d6b3e89fa@a39a5",
+      "displayName": "",
+      "id": "a39a5",
+      "name": "file10.texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "721dc0e2-c167-46c5-b845-aa9d6b3e89fa@49010"
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "ab389": {
+      "importer": "gltf-material",
+      "uuid": "721dc0e2-c167-46c5-b845-aa9d6b3e89fa@ab389",
+      "displayName": "",
+      "id": "ab389",
+      "name": "Burgers_Cream.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "e9e58": {
+      "importer": "gltf-scene",
+      "uuid": "721dc0e2-c167-46c5-b845-aa9d6b3e89fa@e9e58",
+      "displayName": "",
+      "id": "e9e58",
+      "name": "obj_488.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [
+      {
+        "name": "file10",
+        "uri": "721dc0e2-c167-46c5-b845-aa9d6b3e89fa@49010"
+      }
+    ],
+    "fbx": {
+      "smartMaterialEnabled": true
+    },
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "assetFinder": {
+      "meshes": [
+        "721dc0e2-c167-46c5-b845-aa9d6b3e89fa@4bfc4"
+      ],
+      "skeletons": [],
+      "textures": [
+        "721dc0e2-c167-46c5-b845-aa9d6b3e89fa@a39a5"
+      ],
+      "materials": [
+        "721dc0e2-c167-46c5-b845-aa9d6b3e89fa@ab389"
+      ],
+      "scenes": [
+        "721dc0e2-c167-46c5-b845-aa9d6b3e89fa@e9e58"
+      ]
+    }
+  }
+}
