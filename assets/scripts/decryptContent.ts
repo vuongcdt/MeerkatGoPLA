@@ -1,4 +1,4 @@
-    const simpleDecryptContent = (text: string, charShift: number = 5, numberShift: number = 3): string => {
+export const simpleDecryptContent = (text: string, charShift: number = 5, numberShift: number = 3): string => {
         let result = '';
 
         for (let i = 0; i < text.length; i++) {
