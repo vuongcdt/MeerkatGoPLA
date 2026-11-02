@@ -89,9 +89,9 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 1,
-      "y": 1,
-      "z": 1
+      "x": 9,
+      "y": 9,
+      "z": 9
     },
     "_mobility": 0,
     "_layer": 1073741824,
@@ -186,6 +186,7 @@
       "__id__": 0
     },
     "fileId": "f71ka++vJQcLyf0v2PMvNy",
+    "instance": null,
     "targetOverrides": null
   }
 ]

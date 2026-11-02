@@ -22,7 +22,7 @@ export class GameController extends Component {
                node.parent = this.node;
                node.position = v3(s.p.x, s.p.y, s.p.z);
                node.eulerAngles = v3(s.r.x, s.r.y, s.r.z);
-               node.setScale(v3(s.s.x * 18, s.s.y * 18, s.s.z * 18));
+               node.setScale(v3(s.s.x, s.s.y, s.s.z));
             });
          } else {
             console.warn(`Prefab with name ${itemSpawn.id} not found.`);
