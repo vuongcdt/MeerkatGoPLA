@@ -1,0 +1,74 @@
+// Stylized "unlit + soft shading" for food items:
+// faces toward `lightDir` show the texture as-is, faces away fade to `shadeColor` (half-Lambert).
+// Uses its own light direction (independent of scene lights / exposure), so shadows can come from elsewhere.
+CCEffect %{
+  techniques:
+  - name: opaque
+    passes:
+    - vert: shaded-vs:vert
+      frag: shaded-fs:frag
+      properties:
+        mainTexture:  { value: white }
+        mainColor:    { value: [1, 1, 1, 1], linear: true, editor: { type: color } }
+        shadeColor:   { value: [0.62, 0.58, 0.66, 1], linear: true, editor: { type: color, tooltip: 'Multiplier on the side facing away from the light' } }
+        shadeStart:   { value: 0.15, target: shadeParams.x, editor: { tooltip: 'Half-Lambert value where full shade ends' } }
+        shadeEnd:     { value: 0.85, target: shadeParams.y, editor: { tooltip: 'Half-Lambert value where full light starts' } }
+        brightness:   { value: 1.0,  target: shadeParams.z }
+        lightDir:     { value: [-0.4, 0.8, -0.45, 0], editor: { tooltip: 'World direction TOWARD the light (default: above the camera, slightly right)' } }
+}%
+
+CCProgram shaded-vs %{
+  precision highp float;
+  #include <builtin/uniforms/cc-global>
+  #include <legacy/decode-base>
+  #include <legacy/local-batch>
+  #include <legacy/input-standard>
+
+  out vec2 v_uv;
+  out vec3 v_normal;
+
+  vec4 vert () {
+    StandardVertInput In;
+    CCVertInput(In);
+
+    mat4 matWorld, matWorldIT;
+    CCGetWorldMatrixFull(matWorld, matWorldIT);
+
+    v_uv = a_texCoord;
+    v_normal = normalize((matWorldIT * vec4(In.normal, 0.0)).xyz);
+    return cc_matProj * (cc_matView * matWorld) * In.position;
+  }
+}%
+
+CCProgram shaded-fs %{
+  precision highp float;
+  #include <builtin/uniforms/cc-global>
+  #include <legacy/output-standard>
+
+  in vec2 v_uv;
+  in vec3 v_normal;
+
+  uniform sampler2D mainTexture;
+
+  uniform Constant {
+    vec4 mainColor;
+    vec4 shadeColor;
+    vec4 shadeParams;
+    vec4 lightDir;
+  };
+
+  vec4 frag () {
+    vec4 o = mainColor;
+    vec4 texColor = texture(mainTexture, v_uv);
+    texColor.rgb = SRGBToLinear(texColor.rgb);
+    o *= texColor;
+
+    vec3 N = normalize(v_normal);
+    vec3 L = normalize(lightDir.xyz);
+    float halfLambert = dot(N, L) * 0.5 + 0.5;
+    float lit = smoothstep(shadeParams.x, shadeParams.y, halfLambert);
+    o.rgb *= mix(shadeColor.rgb, vec3(1.0), lit) * shadeParams.z;
+
+    return CCFragOutput(o);
+  }
+}%
