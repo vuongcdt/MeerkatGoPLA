@@ -1,0 +1,33 @@
+
+#///////////////////////////
+# Cocos Creator 3D Project
+#///////////////////////////
+library/
+temp/
+local/
+# build/
+profiles/
+native
+#//////////////////////////
+# NPM
+#//////////////////////////
+node_modules/
+
+#//////////////////////////
+# VSCode
+#//////////////////////////
+.vscode/
+
+#//////////////////////////
+# WebStorm
+#//////////////////////////
+.idea/
+
+build/*
+extensions/*
+
+!build/super-html/
+build/super-html/*
+
+!build/super-html/deploy-vercel/
+!build/super-html/deploy-vercel/**
