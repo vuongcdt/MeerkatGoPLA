@@ -1,0 +1,47 @@
+{
+  "__type__": "cc.Material",
+  "_name": "ground-hole",
+  "_objFlags": 0,
+  "__editorExtras__": {},
+  "_native": "",
+  "_effectAsset": {
+    "__uuid__": "b75f7ebf-55cd-413a-928e-0526b8ac56a5",
+    "__expectedType__": "cc.EffectAsset"
+  },
+  "_techIdx": 0,
+  "_defines": [
+    {}
+  ],
+  "_states": [
+    {
+      "rasterizerState": {},
+      "depthStencilState": {},
+      "blendState": {
+        "targets": [
+          {}
+        ]
+      }
+    }
+  ],
+  "_props": [
+    {
+      "mainTexture": {
+        "__uuid__": "ca14f225-49a6-4d6f-9e14-a7a64f1d4015@6c48a",
+        "__expectedType__": "cc.Texture2D"
+      },
+      "tilingOffset": {
+        "__type__": "cc.Vec4",
+        "x": 20,
+        "y": 20,
+        "z": 1,
+        "w": 1
+      },
+      "holeCenter": {
+        "__type__": "cc.Vec2",
+        "x": 0,
+        "y": 0
+      },
+      "holeRadius": 3
+    }
+  ]
+}

@@ -1,5 +1,9 @@
-import { _decorator, BoxCollider, Component, MeshRenderer, Node, RigidBody } from "cc";
+import { _decorator, BoxCollider, Component, MeshRenderer, Node, PhysicsSystem, RigidBody } from "cc";
+import { AsyncUtils } from "../common/AsyncUtils";
 const { ccclass, property } = _decorator;
+
+const BLOCK_DINAMIC: number = PhysicsSystem.PhysicsGroup["BLOCK_DINAMIC"];
+const BLOCK: number = PhysicsSystem.PhysicsGroup["BLOCK"];
 
 @ccclass("BlockView")
 export class BlockView extends Component {
@@ -13,11 +17,24 @@ export class BlockView extends Component {
       // DYNAMIC sẽ ra NaN ngay khi va chạm -> khối rơi/lún (đã thử cả collider có và không lệch tâm).
       // Phải gọi sau khi node đã vào scene (body đã được tạo).
       this.rigidBody.type = RigidBody.Type.KINEMATIC;
-      this.scheduleOnce(() => {
-         if (type == 0) this.rigidBody.type = RigidBody.Type.DYNAMIC;
-      }, 0);
-      this.scheduleOnce(() => {
-         if (type == 0) this.rigidBody.type = RigidBody.Type.KINEMATIC;
-      }, 3);
+      //   if (type == 0) {
+      //      this.scheduleOnce(() => {
+      //         this.setDynamic();
+      //      }, 1);
+      //   }
+   }
+
+   setDynamic() {
+      this.rigidBody.type = RigidBody.Type.DYNAMIC;
+      this.rigidBody.group = BLOCK_DINAMIC;
+      // Đổi group lúc runtime không tự đổi mask (mask chỉ lấy từ matrix lúc tạo body)
+      // -> lấy lại mask của BLOCK_DINAMIC, nếu không sẽ không va chạm với HOLE.
+      this.rigidBody.setMask(PhysicsSystem.instance.collisionMatrix[BLOCK_DINAMIC]);
+   }
+
+   setKinematic() {
+      this.rigidBody.type = RigidBody.Type.KINEMATIC;
+      this.rigidBody.group = BLOCK;
+      this.rigidBody.setMask(PhysicsSystem.instance.collisionMatrix[BLOCK]);
    }
 }
