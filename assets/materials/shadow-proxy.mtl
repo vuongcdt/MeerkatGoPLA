@@ -1,0 +1,31 @@
+{
+  "__type__": "cc.Material",
+  "_name": "shadow-proxy",
+  "_objFlags": 0,
+  "__editorExtras__": {},
+  "_native": "",
+  "_effectAsset": {
+    "__uuid__": "72fdc82c-536d-4fd3-bd41-066bfaf17b6e",
+    "__expectedType__": "cc.EffectAsset"
+  },
+  "_techIdx": 0,
+  "_defines": [
+    {
+      "USE_INSTANCING": true
+    }
+  ],
+  "_states": [
+    {
+      "rasterizerState": {},
+      "depthStencilState": {},
+      "blendState": {
+        "targets": [
+          {}
+        ]
+      }
+    }
+  ],
+  "_props": [
+    {}
+  ]
+}

@@ -1,68 +1,66 @@
-// Ground có lỗ: vẽ như ground bình thường (texture + ánh sáng + nhận bóng),
-// riêng các pixel nằm trong hình tròn quanh tâm hố thì bỏ đi -> trong suốt, nhìn xuyên xuống dưới.
+// Ground có lỗ, tô màu giống PLA gốc (UnityConvertShader): unlit, texture + chỉnh màu
+// (brightness / saturation / contrast / gamma), không tính ánh sáng.
+// Các pixel nằm trong hình tròn quanh tâm hố thì bỏ đi -> trong suốt, nhìn xuyên xuống dưới.
 // holeCenter / holeRadius do script GroundHole cập nhật theo node Hole.
 CCEffect %{
   techniques:
   - name: opaque
     passes:
-    - vert: hole-vs
-      frag: hole-fs
+    - vert: hole-vs:vert
+      frag: hole-fs:frag
       properties:
-        mainTexture:  { value: white }
-        mainColor:    { value: [1, 1, 1, 1], linear: true, editor: { type: color } }
-        tilingOffset: { value: [1, 1, 0, 0] }
-        holeCenter:   { value: [0, 0], target: holeParams.xy, editor: { tooltip: 'Tâm lỗ (world X, Z)' } }
-        holeRadius:   { value: 3, target: holeParams.z, editor: { tooltip: 'Bán kính lỗ (world)' } }
-}%
-
-CCProgram shared-ubos %{
-  uniform Constants {
-    vec4 mainColor;
-    vec4 tilingOffset;
-    vec4 holeParams; // xy: tâm lỗ (world XZ), z: bán kính
-  };
-}%
-
-CCProgram surface-vertex %{
-  #define CC_SURFACES_VERTEX_MODIFY_UV
-  void SurfacesVertexModifyUV(inout SurfacesStandardVertexIntermediate In)
-  {
-    In.texCoord = In.texCoord * tilingOffset.xy + tilingOffset.zw;
-  }
-}%
-
-CCProgram surface-fragment %{
-  uniform sampler2D mainTexture;
-
-  #define CC_SURFACES_FRAGMENT_MODIFY_BASECOLOR_AND_TRANSPARENCY
-  vec4 SurfacesFragmentModifyBaseColorAndTransparency()
-  {
-    // Trong lỗ: bỏ pixel.
-    if (distance(FSInput_worldPos.xz, holeParams.xy) < holeParams.z) discard;
-
-    vec4 texColor = texture(mainTexture, FSInput_texcoord);
-    texColor.rgb = SRGBToLinear(texColor.rgb);
-    return mainColor * texColor;
-  }
+        mainTexture:      { value: white }
+        mainColor:        { value: [1, 1, 1, 1], editor: { type: color } }
+        tilingOffset:     { value: [1, 1, 0, 0] }
+        brightness:       { value: 1.05, target: gradeParams.x }
+        saturation:       { value: 1.2,  target: gradeParams.y }
+        contrast:         { value: 1.1,  target: gradeParams.z }
+        gammaValue:       { value: 5.0,  target: gradeParams.w }
+        diffuseThreshold: { value: 0.5,  target: diffuseParams.x, editor: { tooltip: 'Pixel có cả 3 kênh nhỏ hơn ngưỡng này thì nhân với diffuseFactor' } }
+        diffuseFactor:    { value: 0.2,  target: diffuseParams.y }
+        holeCenter:       { value: [0, 0], target: holeParams.xy, editor: { tooltip: 'Tâm lỗ (world X, Z)' } }
+        holeRadius:       { value: 3, target: holeParams.z, editor: { tooltip: 'Bán kính lỗ (world)' } }
 }%
 
 CCProgram hole-vs %{
-  precision highp float;
-  #include <surfaces/effect-macros/common-macros>
-  #include <surfaces/includes/common-vs>
-  #include <shared-ubos>
-  #include <surface-vertex>
-  #include <surfaces/includes/standard-vs>
-  #include <shading-entries/main-functions/render-to-scene/vs>
+  #include <legacy/main-functions/general-vs>
 }%
 
 CCProgram hole-fs %{
   precision highp float;
-  #include <surfaces/effect-macros/common-macros>
-  #include <surfaces/includes/common-fs>
-  #include <shared-ubos>
-  #include <surface-fragment>
-  #include <lighting-models/includes/standard>
-  #include <surfaces/includes/standard-fs>
-  #include <shading-entries/main-functions/render-to-scene/fs>
+  #include <legacy/output>
+  #include <legacy/fog-fs>
+
+  in vec2 v_uv;
+  in vec3 v_position;
+
+  uniform sampler2D mainTexture;
+  uniform Constant {
+    vec4 mainColor;
+    vec4 tilingOffset;
+    vec4 gradeParams;   // x: brightness, y: saturation, z: contrast, w: gamma
+    vec4 diffuseParams; // x: threshold, y: factor
+    vec4 holeParams;    // xy: tâm lỗ (world XZ), z: bán kính
+  };
+
+  vec4 frag () {
+    // Trong lỗ: bỏ pixel.
+    if (distance(v_position.xz, holeParams.xy) < holeParams.z) discard;
+
+    vec2 uv = v_uv * tilingOffset.xy + tilingOffset.zw;
+    vec4 color = texture(mainTexture, uv) * mainColor;
+
+    // Chỉnh màu y hệt UnityConvertShader của PLA gốc.
+    color.rgb *= gradeParams.x;
+    float gray = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+    color.rgb = mix(vec3(gray), color.rgb, gradeParams.y);
+    color.rgb = (color.rgb - 0.5) * gradeParams.z + 0.5;
+    color.rgb = pow(max(color.rgb, vec3(0.0)), vec3(1.0 / gradeParams.w));
+    if (all(lessThan(color.rgb, vec3(diffuseParams.x)))) {
+      color.rgb *= diffuseParams.y;
+    }
+
+    CC_APPLY_FOG(color, v_position);
+    return CCFragOutput(color);
+  }
 }%

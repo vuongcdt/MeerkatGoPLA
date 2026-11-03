@@ -228,6 +228,19 @@
           {}
         ]
       }
+    },
+    "meshSimplify": {
+      "enable": true,
+      "targetRatio": 0.3,
+      "autoErrorRate": true,
+      "errorRate": 1,
+      "lockBoundary": false
+    },
+    "meshOptimize": {
+      "enable": true,
+      "vertexCache": true,
+      "vertexFetch": true,
+      "overdraw": true
     }
   }
 }

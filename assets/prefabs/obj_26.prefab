@@ -20,6 +20,9 @@
     "_children": [
       {
         "__id__": 2
+      },
+      {
+        "__id__": 14
       }
     ],
     "_active": true,
@@ -99,9 +102,9 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 9,
-      "y": 9,
-      "z": 9
+      "x": 9.3,
+      "y": 9.3,
+      "z": 9.3
     },
     "_mobility": 0,
     "_layer": 1073741824,
@@ -127,7 +130,7 @@
     },
     "_materials": [
       {
-        "__uuid__": "24bf47c6-ca86-4939-a9b0-b186bb3ea80d@d074b",
+        "__uuid__": "8f09032c-aeea-4083-bd76-ea1fa2f0524d",
         "__expectedType__": "cc.Material"
       }
     ],
@@ -139,8 +142,8 @@
       "__uuid__": "24bf47c6-ca86-4939-a9b0-b186bb3ea80d@bd416",
       "__expectedType__": "cc.Mesh"
     },
-    "_shadowCastingMode": 1,
-    "_shadowReceivingMode": 1,
+    "_shadowCastingMode": 0,
+    "_shadowReceivingMode": 0,
     "_shadowBias": 0,
     "_shadowNormalBias": 0,
     "_reflectionProbeId": -1,
@@ -227,12 +230,12 @@
       "__id__": 10
     },
     "_group": 8,
-    "_type": 1,
+    "_type": 4,
     "_mass": 1,
     "_allowSleep": true,
-    "_linearDamping": 0.1,
-    "_angularDamping": 0.1,
-    "_useGravity": true,
+    "_linearDamping": 0.01,
+    "_angularDamping": 0.01,
+    "_useGravity": false,
     "_linearFactor": {
       "__type__": "cc.Vec3",
       "x": 1,
@@ -267,15 +270,15 @@
     "_isTrigger": false,
     "_center": {
       "__type__": "cc.Vec3",
-      "x": -0.023,
-      "y": 0.617,
+      "x": 0,
+      "y": 0.558,
       "z": 0
     },
     "_size": {
       "__type__": "cc.Vec3",
-      "x": 0.864,
-      "y": 1.234,
-      "z": 0.827
+      "x": 0.465,
+      "y": 0.93,
+      "z": 0.465
     },
     "_id": ""
   },
@@ -294,5 +297,126 @@
     "fileId": "f71ka++vJQcLyf0v2PMvNy",
     "instance": null,
     "targetOverrides": null
+  },
+  {
+    "__type__": "cc.Node",
+    "_name": "shadow",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "_parent": {
+      "__id__": 1
+    },
+    "_children": [],
+    "_active": true,
+    "_components": [
+      {
+        "__id__": 15
+      }
+    ],
+    "_prefab": {
+      "__id__": 18
+    },
+    "_lpos": {
+      "__type__": "cc.Vec3",
+      "x": -0.024,
+      "y": 0.637,
+      "z": 0
+    },
+    "_lrot": {
+      "__type__": "cc.Quat",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 1
+    },
+    "_lscale": {
+      "__type__": "cc.Vec3",
+      "x": 1.102,
+      "y": 0.6375,
+      "z": 1.055
+    },
+    "_mobility": 0,
+    "_layer": 1073741824,
+    "_euler": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "_id": ""
+  },
+  {
+    "__type__": "cc.MeshRenderer",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 14
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 16
+    },
+    "_materials": [
+      {
+        "__uuid__": "46a778ee-c49f-4666-a9c5-c5534cfb1e53",
+        "__expectedType__": "cc.Material"
+      }
+    ],
+    "_visFlags": 0,
+    "bakeSettings": {
+      "__id__": 17
+    },
+    "_mesh": {
+      "__uuid__": "1263d74c-8167-4928-91a6-4e2672411f47@8abdc",
+      "__expectedType__": "cc.Mesh"
+    },
+    "_shadowCastingMode": 1,
+    "_shadowReceivingMode": 0,
+    "_shadowBias": 0,
+    "_shadowNormalBias": 0,
+    "_reflectionProbeId": -1,
+    "_reflectionProbeBlendId": -1,
+    "_reflectionProbeBlendWeight": 0,
+    "_enabledGlobalStandardSkinObject": false,
+    "_enableMorph": true,
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "/lQiZs2cw8AJ1sRZRwR/IQ"
+  },
+  {
+    "__type__": "cc.ModelBakeSettings",
+    "texture": null,
+    "uvParam": {
+      "__type__": "cc.Vec4",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "w": 0
+    },
+    "_bakeable": false,
+    "_castShadow": false,
+    "_receiveShadow": false,
+    "_recieveShadow": false,
+    "_lightmapSize": 64,
+    "_useLightProbe": false,
+    "_bakeToLightProbe": true,
+    "_reflectionProbeType": 0,
+    "_bakeToReflectionProbe": true
+  },
+  {
+    "__type__": "cc.PrefabInfo",
+    "root": {
+      "__id__": 1
+    },
+    "asset": {
+      "__id__": 0
+    },
+    "fileId": "BPnGxLe9LW09fKMMQjw21g",
+    "instance": null,
+    "targetOverrides": null,
+    "nestedPrefabInstanceRoots": null
   }
 ]

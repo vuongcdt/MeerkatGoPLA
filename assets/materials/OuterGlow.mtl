@@ -1,0 +1,52 @@
+{
+  "__type__": "cc.Material",
+  "_name": "OuterGlow",
+  "_objFlags": 0,
+  "__editorExtras__": {},
+  "_native": "",
+  "_effectAsset": {
+    "__uuid__": "1baf0fc9-befa-459c-8bdd-af1a450a0319",
+    "__expectedType__": "cc.EffectAsset"
+  },
+  "_techIdx": 1,
+  "_defines": [
+    {
+      "USE_ALBEDO_MAP": true
+    }
+  ],
+  "_states": [
+    {
+      "rasterizerState": {},
+      "depthStencilState": {},
+      "blendState": {
+        "targets": [
+          {}
+        ]
+      }
+    }
+  ],
+  "_props": [
+    {
+      "mainTexture": {
+        "__uuid__": "37961b5b-9772-4f59-8e51-e463fd4645ed@6c48a",
+        "__expectedType__": "cc.Texture2D"
+      },
+      "mainColor": {
+        "__type__": "cc.Color",
+        "r": 255,
+        "g": 252,
+        "b": 190,
+        "a": 79
+      },
+      "occlusion": 1,
+      "roughness": 0,
+      "emissive": {
+        "__type__": "cc.Color",
+        "r": 255,
+        "g": 245,
+        "b": 0,
+        "a": 255
+      }
+    }
+  ]
+}

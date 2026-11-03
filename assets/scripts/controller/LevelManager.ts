@@ -1,4 +1,4 @@
-import { _decorator, Component, game, instantiate, Layers, Material, MeshRenderer, Node, Prefab, TextAsset, v3, Vec3 } from "cc";
+import { _decorator, Component, game, instantiate, Material, MeshRenderer, Node, Prefab, TextAsset, v3, Vec3 } from "cc";
 import { simpleDecryptContent } from "../decryptContent";
 import { ItemSpawn, Level, SpawnData } from "./GameModel";
 import { EVENTS, eventTarget } from "../common/eventTarget";
@@ -7,6 +7,8 @@ const { ccclass, property } = _decorator;
 
 const SCALE_MOVE = 0.25;
 const RANGE = 3;
+const RANGE_SQR = RANGE * RANGE;
+const FAR_RANGE_SQR = RANGE * 2 * (RANGE * 2);
 
 @ccclass("LevelManager")
 export class LevelManager extends Component {
@@ -29,7 +31,8 @@ export class LevelManager extends Component {
          game.restart();
       });
       this._grountMaterial = this.goundMesh?.getSharedMaterial(0);
-      this.hole.position = v3(7.5, 0.01, 5.6);
+      // Hố bản gốc ở (4, 0, 0) -> đổi sang hệ toạ độ đã xoay 180° quanh Y của level.
+      this.hole.position = v3(-4, 0.01, 0);
    }
 
    private init() {
@@ -66,10 +69,12 @@ export class LevelManager extends Component {
             count++;
             const node = instantiate(prefab);
             const blockView = node.getComponent(BlockView);
-            const pos = v3(s.p.x, s.p.y, s.p.z);
+            const pos = v3(-s.p.x, s.p.y, s.p.z);
 
             // Đặt transform trước khi gắn vào scene để body vật lý được tạo đúng vị trí.
-            node.eulerAngles = v3(s.r.x, s.r.y, s.r.z);
+            // Bản gốc đặt (p.x, p.y, -p.z); ở đây đặt (-p.x, p.y, p.z) = cả level xoay 180° quanh Y,
+            // nên mỗi model cũng phải quay thêm 180° quanh Y (euler Cocos theo thứ tự Y-Z-X nên cộng vào r.y).
+            node.eulerAngles = v3(s.r.x, s.r.y + 180, s.r.z);
             node.setScale(v3(s.s.x, s.s.y, s.s.z));
             node.position = pos;
             node.parent = this.node;
@@ -110,27 +115,28 @@ export class LevelManager extends Component {
    }
 
    protected update(dt: number): void {
-      if (this._dirMove.length() == 0) {
+      if (this._dirMove.lengthSqr() === 0) {
          return;
       }
 
-      this._blocks.forEach((blockView) => {
+      // Giống bản gốc (GameLevel.update): không ẩn block nào, render ngoài camera do engine tự cull.
+      // Duyệt hết block, so khoảng cách bình phương trên mặt XZ, không tạo Vec3 mới cho từng block.
+      const holePos = this.hole.worldPosition;
+      const hx = holePos.x;
+      const hz = holePos.z;
+      for (const blockView of this._blocks) {
          const blockPos = blockView.node.worldPosition;
-         const holePos = this.hole.worldPosition;
-         const p1 = v3(blockPos.x, 0, blockPos.z);
-         const p2 = v3(holePos.x, 0, holePos.z);
-         const dist = Vec3.distance(p1, p2);
-         if (dist <= RANGE) {
+         const dx = blockPos.x - hx;
+         const dz = blockPos.z - hz;
+         const dist2 = dx * dx + dz * dz;
+         if (dist2 <= RANGE_SQR) {
             blockView.setDynamic();
-         }
-         if (dist > RANGE * 2) {
+         } else if (dist2 > FAR_RANGE_SQR) {
             blockView.setKinematic();
          }
-      });
-
-      if (this.hole) {
-         const camPos = this.hole.position;
-         this.hole.position = v3(camPos.x - this._dirMove.x * SCALE_MOVE, camPos.y, camPos.z - this._dirMove.z * SCALE_MOVE);
       }
+
+      const pos = this.hole.position;
+      this.hole.setPosition(pos.x - this._dirMove.x * SCALE_MOVE, pos.y, pos.z - this._dirMove.z * SCALE_MOVE);
    }
 }

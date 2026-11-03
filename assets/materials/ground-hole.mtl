@@ -26,16 +26,20 @@
   "_props": [
     {
       "mainTexture": {
-        "__uuid__": "ca14f225-49a6-4d6f-9e14-a7a64f1d4015@6c48a",
+        "__uuid__": "66e6c54e-1c80-4c38-90ba-71427d314c7e@6c48a",
         "__expectedType__": "cc.Texture2D"
       },
       "tilingOffset": {
         "__type__": "cc.Vec4",
-        "x": 20,
-        "y": 20,
-        "z": 1,
-        "w": 1
+        "x": 10,
+        "y": 10,
+        "z": 0,
+        "w": 0
       },
+      "saturation": 0.8,
+      "contrast": 0.88,
+      "gammaValue": 0.6,
+      "diffuseFactor": 1,
       "holeCenter": {
         "__type__": "cc.Vec2",
         "x": 0,

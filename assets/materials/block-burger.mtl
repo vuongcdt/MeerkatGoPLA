@@ -1,0 +1,50 @@
+{
+  "__type__": "cc.Material",
+  "_name": "block-burger",
+  "_objFlags": 0,
+  "__editorExtras__": {},
+  "_native": "",
+  "_effectAsset": {
+    "__uuid__": "713d7ecf-a665-4170-9947-369e2ee33a22",
+    "__expectedType__": "cc.EffectAsset"
+  },
+  "_techIdx": 0,
+  "_defines": [
+    {
+      "USE_INSTANCING": true
+    },
+    {
+      "USE_INSTANCING": true
+    }
+  ],
+  "_states": [
+    {
+      "rasterizerState": {},
+      "depthStencilState": {},
+      "blendState": {
+        "targets": [
+          {}
+        ]
+      }
+    },
+    {
+      "rasterizerState": {},
+      "depthStencilState": {},
+      "blendState": {
+        "targets": [
+          {}
+        ]
+      }
+    }
+  ],
+  "_props": [
+    {
+      "mainTexture": {
+        "__uuid__": "721dc0e2-c167-46c5-b845-aa9d6b3e89fa@a39a5",
+        "__expectedType__": "cc.Texture2D"
+      },
+      "gammaValue": 1
+    },
+    {}
+  ]
+}
