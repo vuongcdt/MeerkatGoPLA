@@ -1,4 +1,4 @@
-import { _decorator, Component, instantiate, Node, Prefab, TextAsset, v3, Vec3 } from "cc";
+import { _decorator, Component, director, instantiate, Node, Prefab, Scene, TextAsset, v3, Vec3 } from "cc";
 import { simpleDecryptContent } from "../decryptContent";
 import { ItemSpawn, Level, SpawnData } from "./GameModel";
 import { EVENTS, eventTarget } from "../common/eventTarget";

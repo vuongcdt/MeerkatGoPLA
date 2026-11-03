@@ -28,10 +28,10 @@
         "__id__": 7
       },
       {
-        "__id__": 11
+        "__id__": 9
       },
       {
-        "__id__": 9
+        "__id__": 11
       }
     ],
     "_prefab": {
@@ -139,7 +139,7 @@
       "__uuid__": "24bf47c6-ca86-4939-a9b0-b186bb3ea80d@bd416",
       "__expectedType__": "cc.Mesh"
     },
-    "_shadowCastingMode": 0,
+    "_shadowCastingMode": 1,
     "_shadowReceivingMode": 1,
     "_shadowBias": 0,
     "_shadowNormalBias": 0,
@@ -199,52 +199,20 @@
     "__prefab": {
       "__id__": 8
     },
-    "meshRenderer": {
-      "__id__": 3
-    },
-    "boxCollider": {
+    "rigidBody": {
       "__id__": 9
     },
-    "rigidBody": {
+    "boxCollider": {
       "__id__": 11
+    },
+    "meshRenderer": {
+      "__id__": 3
     },
     "_id": ""
   },
   {
     "__type__": "cc.CompPrefabInfo",
     "fileId": "04Ofx+m7JF963tbHmRoQ3Y"
-  },
-  {
-    "__type__": "cc.BoxCollider",
-    "_name": "",
-    "_objFlags": 0,
-    "__editorExtras__": {},
-    "node": {
-      "__id__": 1
-    },
-    "_enabled": true,
-    "__prefab": {
-      "__id__": 10
-    },
-    "_material": null,
-    "_isTrigger": false,
-    "_center": {
-      "__type__": "cc.Vec3",
-      "x": 0,
-      "y": 0,
-      "z": 0
-    },
-    "_size": {
-      "__type__": "cc.Vec3",
-      "x": 1,
-      "y": 1,
-      "z": 1
-    },
-    "_id": ""
-  },
-  {
-    "__type__": "cc.CompPrefabInfo",
-    "fileId": "25LXtJg3hOQ57T2PxC+U1A"
   },
   {
     "__type__": "cc.RigidBody",
@@ -256,7 +224,7 @@
     },
     "_enabled": true,
     "__prefab": {
-      "__id__": 12
+      "__id__": 10
     },
     "_group": 1,
     "_type": 2,
@@ -282,6 +250,38 @@
   {
     "__type__": "cc.CompPrefabInfo",
     "fileId": "9aBdJx0q5CiYRalhVWbzj4"
+  },
+  {
+    "__type__": "cc.BoxCollider",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 12
+    },
+    "_material": null,
+    "_isTrigger": false,
+    "_center": {
+      "__type__": "cc.Vec3",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "_size": {
+      "__type__": "cc.Vec3",
+      "x": 1,
+      "y": 1,
+      "z": 1
+    },
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "25LXtJg3hOQ57T2PxC+U1A"
   },
   {
     "__type__": "cc.PrefabInfo",

@@ -9,7 +9,7 @@ export class BlockView extends Component {
 
    init(type: number) {
       this.scheduleOnce(() => {
-        if (type < 2) this.rigidBody.type = RigidBody.Type.DYNAMIC;
+        // if (type < 2) this.rigidBody.type = RigidBody.Type.DYNAMIC;
       }, 0.1);
    }
 }

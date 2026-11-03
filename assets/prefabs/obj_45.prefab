@@ -139,7 +139,7 @@
       "__uuid__": "12d601ab-09f4-4545-ad04-2e59a7549f9a@f9aee",
       "__expectedType__": "cc.Mesh"
     },
-    "_shadowCastingMode": 0,
+    "_shadowCastingMode": 1,
     "_shadowReceivingMode": 1,
     "_shadowBias": 0,
     "_shadowNormalBias": 0,

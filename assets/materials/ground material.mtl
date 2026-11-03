@@ -77,6 +77,13 @@
   ],
   "_props": [
     {
+      "tilingOffset": {
+        "__type__": "cc.Vec4",
+        "x": 20,
+        "y": 20,
+        "z": 1,
+        "w": 1
+      },
       "mainTexture": {
         "__uuid__": "ca14f225-49a6-4d6f-9e14-a7a64f1d4015@6c48a",
         "__expectedType__": "cc.Texture2D"
