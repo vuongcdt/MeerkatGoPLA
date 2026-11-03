@@ -1,4 +1,4 @@
-import { _decorator, Component, instantiate, Node, Prefab, TextAsset, v3, Vec3 } from "cc";
+import { _decorator, Component, game, instantiate, Node, Prefab, TextAsset, v3, Vec3 } from "cc";
 import { simpleDecryptContent } from "../decryptContent";
 import { ItemSpawn, Level, SpawnData } from "./GameModel";
 import { EVENTS, eventTarget } from "../common/eventTarget";
@@ -10,12 +10,16 @@ export class LevelManager extends Component {
    @property(TextAsset) private encryptedTextAsset: TextAsset | null = null;
    @property([Prefab]) private prefabs: Prefab[] = [];
    @property(Node) private camera: Node | null = null;
+   @property(Node) private resetBtn: Node | null = null;
 
    private _dirMove: Vec3 = v3();
    start() {
       this.init();
       eventTarget.on(EVENTS.PLAYER_MOVE, this.onPlayerMove, this);
       eventTarget.on(EVENTS.STOP_MOVE, this.onStopMove, this);
+      this.resetBtn?.on(Node.EventType.TOUCH_END, () => {
+         game.restart();
+      });
    }
 
    private init() {
