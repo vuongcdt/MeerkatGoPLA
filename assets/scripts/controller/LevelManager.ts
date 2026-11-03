@@ -5,7 +5,7 @@ import { EVENTS, eventTarget } from "../common/eventTarget";
 import { BlockView } from "../views/BlockView";
 const { ccclass, property } = _decorator;
 
-const OFFSET = 0.2;
+const SCALE_MOVE = 0.25;
 const RANGE = 3;
 
 @ccclass("LevelManager")
@@ -24,6 +24,7 @@ export class LevelManager extends Component {
       this.init();
       eventTarget.on(EVENTS.PLAYER_MOVE, this.onPlayerMove, this);
       eventTarget.on(EVENTS.STOP_MOVE, this.onStopMove, this);
+      eventTarget.on(EVENTS.BLOCK_DESTROYED, this.onBlockDestroyed, this);
       this.resetBtn?.on(Node.EventType.TOUCH_END, () => {
          game.restart();
       });
@@ -49,6 +50,7 @@ export class LevelManager extends Component {
       blockTypesObj.push(...Array.from(blockTypesSet).map((id) => ({ name: id, id: Number(id.split("_")[1]) })));
       blockTypesObj.sort((a, b) => a.id - b.id);
       console.log("blockTypesObj", blockTypesObj);
+      let count = 0;
 
       level.listItemSpawns.forEach((itemSpawn: ItemSpawn) => {
          const index = blockTypesObj.findIndex((p) => p.name === itemSpawn.id);
@@ -58,6 +60,10 @@ export class LevelManager extends Component {
 
          const prefab = this.prefabs[index];
          itemSpawn.listSpawnDatas.forEach((s: SpawnData) => {
+            // if(count>1000){
+            //    return;
+            // }
+            count++;
             const node = instantiate(prefab);
             const blockView = node.getComponent(BlockView);
             const pos = v3(s.p.x, s.p.y, s.p.z);
@@ -69,12 +75,13 @@ export class LevelManager extends Component {
             node.parent = this.node;
             // init sau khi node đã vào scene: RigidBody đã được tạo (ở dạng DYNAMIC) thì mới đổi type.
             blockView.init(index);
-            index == 1 && this._blocks.push(blockView);
+            this._blocks.push(blockView);
             if (pos.y === 0) {
                positionsSet.add(pos);
             }
          });
       });
+      console.log("count", count);
 
       console.log("positionsSet", positionsSet);
       console.log("decryptedContent", level);
@@ -82,6 +89,19 @@ export class LevelManager extends Component {
 
    private onPlayerMove(dir: Vec3) {
       this._dirMove = dir;
+   }
+
+   protected onDestroy(): void {
+      // eventTarget dùng chung toàn game, phải gỡ listener (vd. sau game.restart()).
+      eventTarget.targetOff(this);
+   }
+
+   /** Block đã bị BlockDestroyer hủy: bỏ khỏi danh sách để update không đụng vào nữa. */
+   private onBlockDestroyed(block: BlockView) {
+      const index = this._blocks.indexOf(block);
+      if (index !== -1) {
+         this._blocks.splice(index, 1);
+      }
    }
 
    private onStopMove() {
@@ -99,16 +119,18 @@ export class LevelManager extends Component {
          const holePos = this.hole.worldPosition;
          const p1 = v3(blockPos.x, 0, blockPos.z);
          const p2 = v3(holePos.x, 0, holePos.z);
-         if (Vec3.distance(p1, p2) <= RANGE) {
+         const dist = Vec3.distance(p1, p2);
+         if (dist <= RANGE) {
             blockView.setDynamic();
-         } else {
+         }
+         if (dist > RANGE * 2) {
             blockView.setKinematic();
          }
       });
 
       if (this.hole) {
          const camPos = this.hole.position;
-         this.hole.position = v3(camPos.x - this._dirMove.x * OFFSET, camPos.y, camPos.z - this._dirMove.z * OFFSET);
+         this.hole.position = v3(camPos.x - this._dirMove.x * SCALE_MOVE, camPos.y, camPos.z - this._dirMove.z * SCALE_MOVE);
       }
    }
 }
