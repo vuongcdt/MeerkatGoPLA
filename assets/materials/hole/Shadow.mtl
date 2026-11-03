@@ -1,0 +1,26 @@
+{
+  "__type__": "cc.Material",
+  "_name": "Shadow",
+  "_objFlags": 0,
+  "__editorExtras__": {},
+  "_native": "",
+  "_effectAsset": {
+    "__uuid__": "a3cd009f-0ab0-420d-9278-b9fdab939bbc"
+  },
+  "_techIdx": 0,
+  "_defines": [
+    {}
+  ],
+  "_states": [],
+  "_props": [
+    {
+      "mainColor": {
+        "__type__": "cc.Color",
+        "r": 195,
+        "g": 195,
+        "b": 195,
+        "a": 255
+      }
+    }
+  ]
+}
