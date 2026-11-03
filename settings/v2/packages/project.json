@@ -5,5 +5,32 @@
       "width": 1080,
       "height": 1920
     }
+  },
+  "physics": {
+    "collisionGroups": [
+      {
+        "index": 1,
+        "name": "GROUND"
+      },
+      {
+        "index": 2,
+        "name": "HOLE"
+      },
+      {
+        "index": 3,
+        "name": "BLOCK"
+      },
+      {
+        "index": 4,
+        "name": "BLOCK_DINAMIC"
+      }
+    ],
+    "collisionMatrix": {
+      "0": 1,
+      "1": 8,
+      "2": 16,
+      "3": 26,
+      "4": 28
+    }
   }
 }

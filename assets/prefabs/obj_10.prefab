@@ -226,8 +226,8 @@
     "__prefab": {
       "__id__": 10
     },
-    "_group": 1,
-    "_type": 2,
+    "_group": 8,
+    "_type": 1,
     "_mass": 1,
     "_allowSleep": true,
     "_linearDamping": 0.1,
@@ -268,13 +268,13 @@
     "_center": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 1.476,
+      "y": 1.4755,
       "z": -0.032
     },
     "_size": {
       "__type__": "cc.Vec3",
       "x": 1.961,
-      "y": 2.941,
+      "y": 2.951,
       "z": 1.268
     },
     "_id": ""

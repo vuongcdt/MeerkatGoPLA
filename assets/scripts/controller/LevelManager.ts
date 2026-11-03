@@ -49,15 +49,20 @@ export class LevelManager extends Component {
 
          const prefab = this.prefabs[index];
          itemSpawn.listSpawnDatas.forEach((s: SpawnData) => {
+            // if (index > 6) {
+            //    return;
+            // }
             const node = instantiate(prefab);
             const blockView = node.getComponent(BlockView);
             const pos = v3(s.p.x, s.p.y, s.p.z);
 
-            blockView.init(index);
-            node.parent = this.node;
-            node.position = pos;
+            // Đặt transform trước khi gắn vào scene để body vật lý được tạo đúng vị trí.
             node.eulerAngles = v3(s.r.x, s.r.y, s.r.z);
             node.setScale(v3(s.s.x, s.s.y, s.s.z));
+            node.position = pos;
+            node.parent = this.node;
+            // init sau khi node đã vào scene: RigidBody đã được tạo (ở dạng DYNAMIC) thì mới đổi type.
+            blockView.init(index);
             if (pos.y === 0) {
                positionsSet.add(pos);
             }
