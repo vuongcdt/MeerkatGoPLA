@@ -10,10 +10,14 @@ const { ccclass, property } = _decorator;
  */
 @ccclass("CameraIntro")
 export class CameraIntro extends Component {
-   @property({ tooltip: "Thời gian intro (giây), bản gốc 1.5" }) introTime = 1.5;
-   @property({ tooltip: "Cao hơn vị trí chơi lúc bắt đầu" }) raise = 10;
-   @property({ tooltip: "Lùi xa hơn vị trí chơi lúc bắt đầu" }) back = 10;
-   @property({ tooltip: "Góc nhìn xuống lúc bắt đầu (độ), bản gốc -39" }) introPitch = -39;
+   /** Thời gian intro (giây), bản gốc 1.5 */
+   @property introTime = 1.5;
+   /** Cao hơn vị trí chơi lúc bắt đầu */
+   @property raise = 10;
+   /** Lùi xa hơn vị trí chơi lúc bắt đầu */
+   @property back = 10;
+   /** Góc nhìn xuống lúc bắt đầu (độ), bản gốc -39 */
+   @property introPitch = -39;
 
    start() {
       const pos = this.node.position.clone();

@@ -234,7 +234,7 @@ export class LevelManager extends Component {
 
    private onStopMove() {
       this._dirMove = v3();
-      console.log("this.hole.position", this.hole.position);
+      // console.log("this.hole.position", this.hole.position);
    }
 
    protected update(dt: number): void {

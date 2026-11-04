@@ -9,8 +9,10 @@ const { ccclass, property } = _decorator;
 @ccclass("FrameAnim")
 export class FrameAnim extends Component {
    @property([SpriteFrame]) frames: SpriteFrame[] = [];
-   @property({ tooltip: "Giây mỗi khung (bản gốc 0.02)" }) frameTime = 0.02;
-   @property({ tooltip: "Tự chạy khi hố lên level" }) playOnLevelUp = true;
+   /** Giây mỗi khung (bản gốc 0.02) */
+   @property frameTime = 0.02;
+   /** Tự chạy khi hố lên level */
+   @property playOnLevelUp = true;
 
    private _renderer: SpriteRenderer | null = null;
    private _index = -1;

@@ -9,7 +9,8 @@ const { ccclass, property } = _decorator;
 export class GroundHole extends Component {
    @property(Node) private hole: Node | null = null;
 
-   @property({ tooltip: "Bán kính lỗ khi Hole có scale = 1. Mặc định 3 = mép trong của 8 tấm Plane (cách tâm 8, rộng 10)." })
+   /** Bán kính lỗ khi Hole có scale = 1. Mặc định 3 = mép trong của 8 tấm Plane (cách tâm 8, rộng 10). */
+   @property
    private radius: number = 3;
 
    private _material: Material | null = null;

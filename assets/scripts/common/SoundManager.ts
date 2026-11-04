@@ -14,15 +14,21 @@ export class SoundManager extends Component {
    public static instance: SoundManager = null;
 
    @property(AudioClip) bgm: AudioClip = null;
-   @property({ type: AudioClip, tooltip: "Ăn block thường" }) collect: AudioClip = null;
-   @property({ type: AudioClip, tooltip: "Ăn block mục tiêu" }) objectiveConsume: AudioClip = null;
-   @property({ type: AudioClip, tooltip: "Hoàn thành một loại mục tiêu" }) objectiveComplete: AudioClip = null;
-   @property({ type: AudioClip, tooltip: "Hố lên level" }) levelUp: AudioClip = null;
-   @property({ type: AudioClip, tooltip: "Thắng (hiện end card)" }) win: AudioClip = null;
+   /** Ăn block thường */
+   @property(AudioClip) collect: AudioClip = null;
+   /** Ăn block mục tiêu */
+   @property(AudioClip) objectiveConsume: AudioClip = null;
+   /** Hoàn thành một loại mục tiêu */
+   @property(AudioClip) objectiveComplete: AudioClip = null;
+   /** Hố lên level */
+   @property(AudioClip) levelUp: AudioClip = null;
+   /** Thắng (hiện end card) */
+   @property(AudioClip) win: AudioClip = null;
 
    @property bgmVolume = 0.3;
    @property sfxVolume = 1;
-   @property({ tooltip: "Số AudioSource xoay vòng cho mỗi clip" }) poolSize = 6;
+   /** Số AudioSource xoay vòng cho mỗi clip */
+   @property poolSize = 6;
 
    private _bgm: AudioSource | null = null;
    private _pools = new Map<AudioClip, { sources: AudioSource[]; next: number; lastFrame: number }>();

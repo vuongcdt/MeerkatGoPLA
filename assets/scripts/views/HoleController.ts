@@ -22,10 +22,14 @@ const _vel = new Vec3();
  */
 @ccclass("HoleController")
 export class HoleController extends Component {
-   @property({ type: Collider, tooltip: "Trigger cầu quanh miệng hố" }) private collider: Collider | null = null;
-   @property({ type: Node, tooltip: "Tâm hút (node Hole). Bỏ trống = node này" }) private center: Node | null = null;
-   @property({ type: Collider, tooltip: "Trigger sâu dưới hố: chạm vào là tính đã ăn" }) private eatCollider: Collider | null = null;
-   @property({ type: Camera, tooltip: "Camera lùi ra khi lên level" }) private camera: Camera | null = null;
+   /** Trigger cầu quanh miệng hố */
+   @property(Collider) private collider: Collider | null = null;
+   /** Tâm hút (node Hole). Bỏ trống = node này */
+   @property(Node) private center: Node | null = null;
+   /** Trigger sâu dưới hố: chạm vào là tính đã ăn */
+   @property(Collider) private eatCollider: Collider | null = null;
+   /** Camera lùi ra khi lên level */
+   @property(Camera) private camera: Camera | null = null;
 
    private _inside = new Set<Node>();
    /** Chống đếm 2 lần nếu block chạm EatZone nhiều nhịp. */

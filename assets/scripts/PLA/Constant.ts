@@ -1,6 +1,6 @@
 export class Constant {
 	static SRORE_LINK = {
-		ANDROID_LINK: 'https://play.google.com/store/apps/details?id=lm.yarn.in.color.jam&gl=jp',
-		IOS_LINK: 'https://play.google.com/store/apps/details?id=lm.yarn.in.color.jam&gl=jp',
+		ANDROID_LINK: 'https://play.google.com/store/games',
+		IOS_LINK: 'https://apps.apple.com/vn/iphone/games?l=vi',
 	};
 }

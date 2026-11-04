@@ -14,13 +14,20 @@ const _tmp = v3();
  */
 @ccclass("HoleLevelUI")
 export class HoleLevelUI extends Component {
-   @property({ type: HoleController, tooltip: "Hố (lấy level + XP)" }) hole: HoleController | null = null;
-   @property({ type: Node, tooltip: "Điểm 3D dưới miệng hố để gắn nhãn" }) anchor: Node | null = null;
-   @property({ type: Camera, tooltip: "Camera 3D nhìn hố" }) camera: Camera | null = null;
-   @property({ type: Label, tooltip: "Chữ LV. n" }) levelLabel: Label | null = null;
-   @property({ type: Sprite, tooltip: "Thanh XP (Sprite kiểu FILLED)" }) xpFill: Sprite | null = null;
-   @property({ type: Node, tooltip: "Node chứa chữ \"+n\" bay lên (bản gốc: ParentFloating)" }) floatingParent: Node | null = null;
-   @property({ tooltip: "Số chữ \"+n\" hiện cùng lúc tối đa (nuốt hàng loạt không bị rối màn hình)" }) maxFloating = 15;
+   /** Hố (lấy level + XP) */
+   @property(HoleController) hole: HoleController | null = null;
+   /** Điểm 3D dưới miệng hố để gắn nhãn */
+   @property(Node) anchor: Node | null = null;
+   /** Camera 3D nhìn hố */
+   @property(Camera) camera: Camera | null = null;
+   /** Chữ LV. n */
+   @property(Label) levelLabel: Label | null = null;
+   /** Thanh XP (Sprite kiểu FILLED) */
+   @property(Sprite) xpFill: Sprite | null = null;
+   /** Node chứa chữ "+n" bay lên (bản gốc: ParentFloating) */
+   @property(Node) floatingParent: Node | null = null;
+   /** Số chữ "+n" hiện cùng lúc tối đa (nuốt hàng loạt không bị rối màn hình) */
+   @property maxFloating = 15;
 
    private _shownLevel = -1;
    private _pool: Label[] = [];

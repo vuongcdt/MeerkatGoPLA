@@ -1,6 +1,7 @@
 import { _decorator, Component, Label, Node, Tween, tween, UIOpacity, v3, Vec3 } from "cc";
 import { EVENTS, eventTarget } from "../common/eventTarget";
 import { BlockView } from "../views/BlockView";
+import Super_html_script from "../PLA/Super_html_script";
 const { ccclass, property } = _decorator;
 
 /**
@@ -12,22 +13,38 @@ const { ccclass, property } = _decorator;
  */
 @ccclass("UIController")
 export class UIController extends Component {
-   @property({ type: Node, tooltip: "Bàn tay chỉ dẫn (node con của tutorial)" }) handTutorial: Node = null;
-   @property({ type: Node, tooltip: "Node cha của toàn bộ tutorial" }) tutorial: Node = null;
-   @property({ type: [Node], tooltip: "Dấu tick, thứ tự trùng với type block" }) checks: Node[] = [];
-   @property({ type: [Label], tooltip: "Label đếm ngược, thứ tự trùng với type block" }) totalItems: Label[] = [];
-   @property({ type: Node, tooltip: "Node end card, ẩn lúc đầu, hiện khi cả 3 mục tiêu hoàn thành" }) endCard: Node = null;
-   @property({ type: Node, tooltip: "Popup bên trong end card (để trống thì dùng chính end card)" }) endPopup: Node = null;
-   @property({ tooltip: "Giây chờ sau khi xong mục tiêu cuối rồi mới hiện end card" }) endCardDelay = 0.6;
-   @property({ tooltip: "Giây đứng yên (sau khi thả tay) trước khi hiện lại tutorial" }) idleShowDelay = 3;
-   @property({ type: Node, tooltip: "Hình số 8 (infinity): bàn tay chạy quanh tâm node này. Bỏ trống = tâm tutorial" }) infinity: Node = null;
-   @property({ tooltip: "Nửa chiều ngang đường số 8 (px)" }) handLoopHalfWidth = 100;
-   @property({ tooltip: "Nửa chiều cao mỗi vòng của số 8 (px)" }) handLoopHalfHeight = 40;
-   @property({ tooltip: "Thời gian bàn tay chạy hết 1 vòng số 8 (giây)" }) handLoopDuration = 1.6;
-   @property({ tooltip: "Lệch thêm của bàn tay so với đường số 8 (px), để đầu ngón tay nằm đúng trên nét vẽ" }) handOffset: Vec3 = v3();
-   @property({ type: Node, tooltip: "Chữ \"Slide to move\": phóng to/thu nhỏ 2 nhịp mỗi vòng bàn tay (như bản gốc)" }) tutorialText: Node = null;
-   @property({ tooltip: "Mức phóng to của chữ tutorial (bản gốc 1.2)" }) tutorialTextPulse = 1.2;
-   @property({ type: [Node], tooltip: "Các nút Play Now: nhịp \"đập\" liên tục (như bản gốc)" }) playButtons: Node[] = [];
+   /** Bàn tay chỉ dẫn (node con của tutorial) */
+   @property(Node) handTutorial: Node = null;
+   /** Node cha của toàn bộ tutorial */
+   @property(Node) tutorial: Node = null;
+   /** Dấu tick, thứ tự trùng với type block */
+   @property([Node]) checks: Node[] = [];
+   /** Label đếm ngược, thứ tự trùng với type block */
+   @property([Label]) totalItems: Label[] = [];
+   /** Node end card, ẩn lúc đầu, hiện khi cả 3 mục tiêu hoàn thành */
+   @property(Node) endCard: Node = null;
+   /** Popup bên trong end card (để trống thì dùng chính end card) */
+   @property(Node) endPopup: Node = null;
+   /** Giây chờ sau khi xong mục tiêu cuối rồi mới hiện end card */
+   @property endCardDelay = 0.6;
+   /** Giây đứng yên (sau khi thả tay) trước khi hiện lại tutorial */
+   @property idleShowDelay = 3;
+   /** Hình số 8 (infinity): bàn tay chạy quanh tâm node này. Bỏ trống = tâm tutorial */
+   @property(Node) infinity: Node = null;
+   /** Nửa chiều ngang đường số 8 (px) */
+   @property handLoopHalfWidth = 100;
+   /** Nửa chiều cao mỗi vòng của số 8 (px) */
+   @property handLoopHalfHeight = 40;
+   /** Thời gian bàn tay chạy hết 1 vòng số 8 (giây) */
+   @property handLoopDuration = 1.6;
+   /** Lệch thêm của bàn tay so với đường số 8 (px), để đầu ngón tay nằm đúng trên nét vẽ */
+   @property handOffset: Vec3 = v3();
+   /** Chữ "Slide to move": phóng to/thu nhỏ 2 nhịp mỗi vòng bàn tay (như bản gốc) */
+   @property(Node) tutorialText: Node = null;
+   /** Mức phóng to của chữ tutorial (bản gốc 1.2) */
+   @property tutorialTextPulse = 1.2;
+   /** Các nút Play Now: nhịp "đập" liên tục (như bản gốc) */
+   @property([Node]) playButtons: Node[] = [];
 
    /** Type block (index trong listItemSpawns) của từng mục tiêu; index trùng với `totalItems` / `checks` / `_totals`. */
    private _types = [0, 5, 10];
@@ -59,6 +76,7 @@ export class UIController extends Component {
          this.endCard.active = false;
       }
       this.showTutorial(false);
+      this.endCard.on(Node.EventType.TOUCH_START, this.onCta, this);
       this.playButtons.forEach((btn) => btn && this.pulsePlayButton(btn));
    }
 
@@ -71,6 +89,7 @@ export class UIController extends Component {
       const b = btn.scale.clone();
       const at = (k: number) => v3(b.x * k, b.y * k, b.z);
       Tween.stopAllByTarget(btn);
+      btn.on(Node.EventType.TOUCH_START, this.onCta, this);
       tween(btn)
          .repeatForever(
             tween<Node>()
@@ -151,11 +170,7 @@ export class UIController extends Component {
          const half = this.handLoopDuration / 4;
          this.tutorialText.setScale(b);
          tween(this.tutorialText)
-            .repeatForever(
-               tween<Node>()
-                  .to(half, { scale: big }, { easing: "sineInOut" })
-                  .to(half, { scale: b.clone() }, { easing: "sineInOut" }),
-            )
+            .repeatForever(tween<Node>().to(half, { scale: big }, { easing: "sineInOut" }).to(half, { scale: b.clone() }, { easing: "sineInOut" }))
             .start();
       }
 
@@ -279,7 +294,9 @@ export class UIController extends Component {
       if (check) {
          check.active = true;
          check.setScale(0, 0, 1);
-         tween(check).to(0.35, { scale: v3(1, 1, 1) }, { easing: "backOut" }).start();
+         tween(check)
+            .to(0.35, { scale: v3(1, 1, 1) }, { easing: "backOut" })
+            .start();
       }
    }
 
@@ -303,7 +320,9 @@ export class UIController extends Component {
 
       const popup = this.endPopup ?? this.endCard;
       popup.setScale(0.6, 0.6, 1);
-      tween(popup).to(0.4, { scale: v3(1, 1, 1) }, { easing: "backOut" }).start();
+      tween(popup)
+         .to(0.4, { scale: v3(1, 1, 1) }, { easing: "backOut" })
+         .start();
    }
 
    /** Nảy nhẹ label mỗi lần đếm để người chơi thấy phản hồi. */
@@ -313,6 +332,15 @@ export class UIController extends Component {
       }
       Tween.stopAllByTarget(node);
       node.setScale(1, 1, 1);
-      tween(node).to(0.06, { scale: v3(1.2, 1.2, 1) }).to(0.1, { scale: v3(1, 1, 1) }).start();
+      tween(node)
+         .to(0.06, { scale: v3(1.2, 1.2, 1) })
+         .to(0.1, { scale: v3(1, 1, 1) })
+         .start();
+   }
+
+   private onCta() {
+      console.log("onCta", 1);
+      Super_html_script.on_click_game_end();
+      Super_html_script.on_click_download();
    }
 }
