@@ -25,8 +25,30 @@ export class BlockView extends Component {
    /** Đã được UI đếm chưa (mỗi block chỉ đếm một lần dù nhận nhiều sự kiện khác nhau). */
    counted = false;
 
+   /** Ô lưới LevelManager đang giữ block này (null = đang DYNAMIC hoặc đã bỏ theo dõi). */
+   cellKey: number | null = null;
+
    init(type: number) {
       this.type = type;
+   }
+
+   private _physicsOn = true;
+
+   /**
+    * Bật/tắt body vật lý (collider + RigidBody), không ảnh hưởng hiển thị.
+    * Block ở xa hố không cần vật lý: tắt đi để Bullet chỉ phải xử lý vài trăm body quanh hố thay vì cả level.
+    */
+   setPhysics(on: boolean) {
+      if (this._physicsOn === on) {
+         return;
+      }
+      this._physicsOn = on;
+      if (this.boxCollider) {
+         this.boxCollider.enabled = on;
+      }
+      if (this.rigidBody) {
+         this.rigidBody.enabled = on;
+      }
    }
 
    setDynamic() {

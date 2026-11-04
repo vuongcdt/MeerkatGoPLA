@@ -43,6 +43,11 @@ export class HoleController extends Component {
       return this._level;
    }
 
+   /** Tiến độ XP của level hiện tại (0..1), dùng cho thanh XP ở miệng hố. */
+   get xpRatio() {
+      return Math.min(this._xp / HoleConfig.getRequiredXP(this._level), 1);
+   }
+
    onLoad() {
       this._baseScale = this.node.scale.x;
       if (this.camera) {

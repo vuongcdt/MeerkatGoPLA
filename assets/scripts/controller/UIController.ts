@@ -20,7 +20,14 @@ export class UIController extends Component {
    @property({ type: Node, tooltip: "Popup bên trong end card (để trống thì dùng chính end card)" }) endPopup: Node = null;
    @property({ tooltip: "Giây chờ sau khi xong mục tiêu cuối rồi mới hiện end card" }) endCardDelay = 0.6;
    @property({ tooltip: "Giây đứng yên (sau khi thả tay) trước khi hiện lại tutorial" }) idleShowDelay = 3;
-   @property({ tooltip: "Biên độ lướt của bàn tay (px)" }) handSwipe = 60;
+   @property({ type: Node, tooltip: "Hình số 8 (infinity): bàn tay chạy quanh tâm node này. Bỏ trống = tâm tutorial" }) infinity: Node = null;
+   @property({ tooltip: "Nửa chiều ngang đường số 8 (px)" }) handLoopHalfWidth = 100;
+   @property({ tooltip: "Nửa chiều cao mỗi vòng của số 8 (px)" }) handLoopHalfHeight = 40;
+   @property({ tooltip: "Thời gian bàn tay chạy hết 1 vòng số 8 (giây)" }) handLoopDuration = 1.6;
+   @property({ tooltip: "Lệch thêm của bàn tay so với đường số 8 (px), để đầu ngón tay nằm đúng trên nét vẽ" }) handOffset: Vec3 = v3();
+   @property({ type: Node, tooltip: "Chữ \"Slide to move\": phóng to/thu nhỏ 2 nhịp mỗi vòng bàn tay (như bản gốc)" }) tutorialText: Node = null;
+   @property({ tooltip: "Mức phóng to của chữ tutorial (bản gốc 1.2)" }) tutorialTextPulse = 1.2;
+   @property({ type: [Node], tooltip: "Các nút Play Now: nhịp \"đập\" liên tục (như bản gốc)" }) playButtons: Node[] = [];
 
    /** Type block (index trong listItemSpawns) của từng mục tiêu; index trùng với `totalItems` / `checks` / `_totals`. */
    private _types = [0, 5, 10];
@@ -28,7 +35,9 @@ export class UIController extends Component {
    private _totals = [672, 100, 480];
    private _remain: number[] = [];
 
-   private _handBasePos: Vec3 = v3();
+   /** Tiến độ đi trên đường số 8 (0..1), tween giá trị này rồi đặt vị trí bàn tay theo. */
+   private _handPath = { t: 0 };
+   private _textBaseScale: Vec3 = v3(1, 1, 1);
    private _opacity: UIOpacity | null = null;
    private _moving = false;
    private _idleTime = 0;
@@ -38,8 +47,8 @@ export class UIController extends Component {
    onLoad() {
       this._remain = this._totals.slice();
       this._opacity = this.tutorial?.getComponent(UIOpacity) ?? this.tutorial?.addComponent(UIOpacity) ?? null;
-      if (this.handTutorial) {
-         this._handBasePos = this.handTutorial.position.clone();
+      if (this.tutorialText) {
+         this._textBaseScale = this.tutorialText.scale.clone();
       }
    }
 
@@ -50,6 +59,27 @@ export class UIController extends Component {
          this.endCard.active = false;
       }
       this.showTutorial(false);
+      this.playButtons.forEach((btn) => btn && this.pulsePlayButton(btn));
+   }
+
+   /**
+    * Nhịp "đập" của nút Play Now, chép clip Scale của bản gốc (1.27s/chu kỳ):
+    * to dần lên 1.163 (0.72s) -> bóp nhanh 0.938 (0.1s) -> về 1 (0.06s) -> đứng yên tới hết chu kỳ.
+    * Nhân theo scale gốc của từng nút.
+    */
+   private pulsePlayButton(btn: Node) {
+      const b = btn.scale.clone();
+      const at = (k: number) => v3(b.x * k, b.y * k, b.z);
+      Tween.stopAllByTarget(btn);
+      tween(btn)
+         .repeatForever(
+            tween<Node>()
+               .to(0.72, { scale: at(1.163) }, { easing: "sineInOut" })
+               .to(0.1, { scale: at(0.938) }, { easing: "sineIn" })
+               .to(0.06, { scale: at(1) }, { easing: "sineOut" })
+               .delay(0.39),
+         )
+         .start();
    }
 
    onEnable() {
@@ -114,15 +144,31 @@ export class UIController extends Component {
          }
       }
 
-      // Bàn tay lướt trái <-> phải liên tục.
-      if (this.handTutorial) {
-         const p = this._handBasePos;
-         this.handTutorial.setPosition(p.x - this.handSwipe, p.y, p.z);
-         tween(this.handTutorial)
+      // Chữ tutorial phóng to/thu nhỏ 2 nhịp mỗi vòng bàn tay (bản gốc: 1 -> 1.2 -> 1 -> 1.2 -> 1 trong 1 vòng).
+      if (this.tutorialText) {
+         const b = this._textBaseScale;
+         const big = v3(b.x * this.tutorialTextPulse, b.y * this.tutorialTextPulse, b.z);
+         const half = this.handLoopDuration / 4;
+         this.tutorialText.setScale(b);
+         tween(this.tutorialText)
             .repeatForever(
                tween<Node>()
-                  .to(0.7, { position: v3(p.x + this.handSwipe, p.y, p.z) }, { easing: "sineInOut" })
-                  .to(0.7, { position: v3(p.x - this.handSwipe, p.y, p.z) }, { easing: "sineInOut" }),
+                  .to(half, { scale: big }, { easing: "sineInOut" })
+                  .to(half, { scale: b.clone() }, { easing: "sineInOut" }),
+            )
+            .start();
+      }
+
+      // Bàn tay chạy theo hình số 8 nằm liên tục.
+      if (this.handTutorial) {
+         this._handPath.t = 0;
+         this.placeHand(0);
+         tween(this._handPath)
+            .repeatForever(
+               tween<{ t: number }>()
+                  .set({ t: 0 })
+                  .to(this.handLoopDuration, { t: 1 }, { onUpdate: (target: { t: number }) => this.placeHand(target.t) })
+                  .delay(0.3),
             )
             .start();
       }
@@ -149,7 +195,25 @@ export class UIController extends Component {
          .start();
    }
 
+   /**
+    * Đặt bàn tay tại điểm `t` (0..1) trên đường số 8 nằm (lemniscate Gerono):
+    * x = W·sin(θ), y = H·sin(2θ), θ = 2πt. t = 0 ở giữa, 0.25 mép phải, 0.75 mép trái.
+    */
+   private placeHand(t: number) {
+      const theta = t * Math.PI * 2;
+      const c = this.infinity ? this.infinity.position : Vec3.ZERO;
+      this.handTutorial.setPosition(
+         c.x + this.handLoopHalfWidth * Math.sin(theta) + this.handOffset.x,
+         c.y + this.handLoopHalfHeight * Math.sin(theta * 2) + this.handOffset.y,
+         c.z,
+      );
+   }
+
    private stopTutorialTweens() {
+      Tween.stopAllByTarget(this._handPath);
+      if (this.tutorialText) {
+         Tween.stopAllByTarget(this.tutorialText);
+      }
       if (this._opacity) {
          Tween.stopAllByTarget(this._opacity);
       }
@@ -160,21 +224,29 @@ export class UIController extends Component {
 
    // ----------------------------------------------------------- Bộ đếm mục tiêu
 
+   /** Block đã phát âm thanh "ăn" (SWALLOWED rồi EATEN cùng 1 block chỉ phát 1 lần). */
+   private _collected = new WeakSet<Node>();
+
    private onBlockNode(node: Node) {
-      this.countBlock(node?.getComponent(BlockView));
+      const isTarget = this.countBlock(node?.getComponent(BlockView));
+      if (node && !this._collected.has(node)) {
+         this._collected.add(node);
+         eventTarget.emit(EVENTS.BLOCK_COLLECTED, isTarget);
+      }
    }
 
    private onBlockDestroyed(block: BlockView) {
       this.countBlock(block);
    }
 
-   private countBlock(block: BlockView | null | undefined) {
+   /** Đếm block nếu là mục tiêu còn đang đếm. Trả về true nếu block được tính là mục tiêu. */
+   private countBlock(block: BlockView | null | undefined): boolean {
       if (!block || block.counted) {
-         return;
+         return false;
       }
       const type = this._types.indexOf(block.type);
       if (type < 0 || this._remain[type] <= 0) {
-         return;
+         return false;
       }
       block.counted = true;
       this._remain[type]--;
@@ -187,6 +259,7 @@ export class UIController extends Component {
             this.scheduleOnce(this.showEndCard, this.endCardDelay);
          }
       }
+      return true;
    }
 
    private refreshLabel(type: number) {
@@ -197,6 +270,7 @@ export class UIController extends Component {
    }
 
    private onTypeCompleted(type: number) {
+      eventTarget.emit(EVENTS.TARGET_COMPLETED, type);
       const label = this.totalItems[type];
       const check = this.checks[type];
       if (label) {
@@ -216,6 +290,7 @@ export class UIController extends Component {
          return;
       }
       this._ended = true;
+      eventTarget.emit(EVENTS.GAME_WIN);
       this.hideTutorial();
       if (!this.endCard) {
          return;
