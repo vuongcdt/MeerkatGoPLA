@@ -17,7 +17,24 @@
   "_states": [
     {
       "rasterizerState": {},
-      "depthStencilState": {},
+      "depthStencilState": {
+        "stencilReadMaskFront": 65535,
+        "stencilWriteMaskFront": 65535,
+        "stencilTestFront": true,
+        "stencilFuncFront": 5,
+        "stencilRefFront": 2,
+        "stencilFailOpFront": 1,
+        "stencilZFailOpFront": 1,
+        "stencilPassOpFront": 1,
+        "stencilReadMaskBack": 65535,
+        "stencilWriteMaskBack": 65535,
+        "stencilTestBack": true,
+        "stencilFuncBack": 5,
+        "stencilRefBack": 2,
+        "stencilFailOpBack": 1,
+        "stencilZFailOpBack": 1,
+        "stencilPassOpBack": 1
+      },
       "blendState": {
         "targets": [
           {}

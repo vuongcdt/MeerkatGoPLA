@@ -16,7 +16,7 @@ CCEffect %{
         gammaValue:       { value: 5.0,  target: gradeParams.w }
         diffuseThreshold: { value: 0.5,  target: diffuseParams.x, editor: { tooltip: 'Pixel có cả 3 kênh nhỏ hơn ngưỡng này thì nhân với diffuseFactor' } }
         diffuseFactor:    { value: 0.2,  target: diffuseParams.y }
-        cutoff:           { value: 0.5,  target: diffuseParams.z, editor: { tooltip: 'Alpha nhỏ hơn thì bỏ pixel' } }
+        cutoff:           { value: 0.5,  target: diffuseParams.z, editor: { parent: USE_ALPHA_TEST, tooltip: 'Alpha nhỏ hơn thì bỏ pixel' } }
     - &planar-shadow
       vert: planar-shadow-vs:vert
       frag: planar-shadow-fs:frag
@@ -71,7 +71,10 @@ CCProgram unlit-fs %{
     if (all(lessThan(color.rgb, vec3(diffuseParams.x)))) {
       color.rgb *= diffuseParams.y;
     }
-    if (color.a < diffuseParams.z) discard;
+    // discard làm GPU di động tắt early-Z (mọi lớp bị che vẫn phải tô) -> chỉ bật khi texture thật sự có alpha cắt.
+    #if USE_ALPHA_TEST
+      if (color.a < diffuseParams.z) discard;
+    #endif
 
     CC_APPLY_FOG(color, v_position);
     return CCFragOutput(color);
