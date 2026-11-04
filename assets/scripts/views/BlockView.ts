@@ -19,7 +19,12 @@ export class BlockView extends Component {
       return this.rigidBody?.type === RigidBody.Type.DYNAMIC;
    }
 
-   init(type: number) {}
+   /** Loại block (index trong listItemSpawns), UIController dùng để đếm mục tiêu. */
+   type = -1;
+
+   init(type: number) {
+      this.type = type;
+   }
 
    setDynamic() {
       const rb = this.rigidBody;
