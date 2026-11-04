@@ -55,12 +55,17 @@ export class UIController extends Component {
    onEnable() {
       eventTarget.on(EVENTS.PLAYER_MOVE, this.onPlayerMove, this);
       eventTarget.on(EVENTS.STOP_MOVE, this.onStopMove, this);
+      // Sớm nhất là SWALLOWED (vừa chìm xuống mặt hố). EATEN/DESTROYED chỉ là dự phòng; cờ block.counted chặn đếm trùng.
+      eventTarget.on(EVENTS.BLOCK_SWALLOWED, this.onBlockNode, this);
+      eventTarget.on(EVENTS.BLOCK_EATEN, this.onBlockNode, this);
       eventTarget.on(EVENTS.BLOCK_DESTROYED, this.onBlockDestroyed, this);
    }
 
    onDisable() {
       eventTarget.off(EVENTS.PLAYER_MOVE, this.onPlayerMove, this);
       eventTarget.off(EVENTS.STOP_MOVE, this.onStopMove, this);
+      eventTarget.off(EVENTS.BLOCK_SWALLOWED, this.onBlockNode, this);
+      eventTarget.off(EVENTS.BLOCK_EATEN, this.onBlockNode, this);
       eventTarget.off(EVENTS.BLOCK_DESTROYED, this.onBlockDestroyed, this);
       this.stopTutorialTweens();
    }
@@ -155,12 +160,23 @@ export class UIController extends Component {
 
    // ----------------------------------------------------------- Bộ đếm mục tiêu
 
+   private onBlockNode(node: Node) {
+      this.countBlock(node?.getComponent(BlockView));
+   }
+
    private onBlockDestroyed(block: BlockView) {
-      const blockType = block?.type ?? -1;
-      const type = this._types.indexOf(blockType);
-      if (type < 0 || type >= this._remain.length || this._remain[type] <= 0) {
+      this.countBlock(block);
+   }
+
+   private countBlock(block: BlockView | null | undefined) {
+      if (!block || block.counted) {
          return;
       }
+      const type = this._types.indexOf(block.type);
+      if (type < 0 || this._remain[type] <= 0) {
+         return;
+      }
+      block.counted = true;
       this._remain[type]--;
       this.refreshLabel(type);
       this.punch(this.totalItems[type]?.node);

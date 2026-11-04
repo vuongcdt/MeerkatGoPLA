@@ -22,6 +22,9 @@ export class BlockView extends Component {
    /** Loại block (index trong listItemSpawns), UIController dùng để đếm mục tiêu. */
    type = -1;
 
+   /** Đã được UI đếm chưa (mỗi block chỉ đếm một lần dù nhận nhiều sự kiện khác nhau). */
+   counted = false;
+
    init(type: number) {
       this.type = type;
    }

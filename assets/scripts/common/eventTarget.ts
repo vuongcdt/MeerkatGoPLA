@@ -9,4 +9,6 @@ export enum EVENTS {
    BLOCK_EATEN,
    /** Hố lên level. Tham số: level mới (bắt đầu từ 0). */
    LEVEL_UP,
+   /** Block vừa chìm xuống dưới mặt hố (sớm hơn nhiều so với BLOCK_EATEN ở đáy hố). Tham số: node của block. */
+   BLOCK_SWALLOWED,
 }

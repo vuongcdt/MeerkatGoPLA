@@ -7,6 +7,8 @@ const BLOCK: number = PhysicsSystem.PhysicsGroup["BLOCK"];
 const BLOCK_DINAMIC: number = PhysicsSystem.PhysicsGroup["BLOCK_DINAMIC"];
 /** Giới hạn tốc độ block trong hố: chặn penetration / nổ solver dẫn tới NaN. */
 const MAX_SPEED = 60;
+/** Block chìm sâu hơn mức này dưới mặt hố (đơn vị world) thì tính là đã bị nuốt, để UI cập nhật ngay. */
+const SWALLOW_DEPTH = -2;
 const _dir = new Vec3();
 const _vel = new Vec3();
 
@@ -28,6 +30,8 @@ export class HoleController extends Component {
    private _inside = new Set<Node>();
    /** Chống đếm 2 lần nếu block chạm EatZone nhiều nhịp. */
    private _eaten = new Set<Node>();
+   /** Block đã báo BLOCK_SWALLOWED (mỗi block chỉ báo một lần). */
+   private _swallowed = new Set<Node>();
    private _level = 0;
    private _xp = 0;
    private _baseScale = 1;
@@ -135,6 +139,11 @@ export class HoleController extends Component {
             this._eaten.delete(node);
          }
       });
+      this._swallowed.forEach((node) => {
+         if (!node.isValid) {
+            this._swallowed.delete(node);
+         }
+      });
       this._inside.forEach((node) => {
          if (!node.isValid) {
             this._inside.delete(node);
@@ -145,6 +154,13 @@ export class HoleController extends Component {
             return;
          }
          const objPos = node.worldPosition;
+
+         // Chìm xuống dưới mặt hố thì báo UI ngay, không chờ block rơi tới đáy (y ~ -70 / -85, mất > 1 giây).
+         // Bản gốc cũng tính "đã ăn" khi qua mốc y = -2.
+         if (objPos.y < holePos.y + SWALLOW_DEPTH && !this._swallowed.has(node)) {
+            this._swallowed.add(node);
+            eventTarget.emit(EVENTS.BLOCK_SWALLOWED, node);
+         }
 
          // Body đã hỏng (NaN): dừng hẳn, bỏ khỏi danh sách, tắt node thay vì để lơ lửng ở toạ độ NaN.
          if (!Number.isFinite(objPos.x) || !Number.isFinite(objPos.y) || !Number.isFinite(objPos.z)) {
