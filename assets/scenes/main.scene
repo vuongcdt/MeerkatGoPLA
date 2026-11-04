@@ -7306,6 +7306,7 @@
     },
     "endCardDelay": 0.6,
     "idleShowDelay": 3,
+    "idleEndCardTime": 30,
     "infinity": {
       "__id__": 168
     },

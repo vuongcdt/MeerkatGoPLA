@@ -29,6 +29,8 @@ export class UIController extends Component {
    @property endCardDelay = 0.6;
    /** Giây đứng yên (sau khi thả tay) trước khi hiện lại tutorial */
    @property idleShowDelay = 3;
+   /** Sau lần di chuyển đầu tiên, đứng yên liên tục chừng này giây thì tự hiện end card */
+   @property idleEndCardTime = 30;
    /** Hình số 8 (infinity): bàn tay chạy quanh tâm node này. Bỏ trống = tâm tutorial */
    @property(Node) infinity: Node = null;
    /** Nửa chiều ngang đường số 8 (px) */
@@ -58,6 +60,10 @@ export class UIController extends Component {
    private _opacity: UIOpacity | null = null;
    private _moving = false;
    private _idleTime = 0;
+   /** Số giây liên tục người chơi không di chuyển (tính từ sau lần di chuyển đầu tiên), dùng để tự hiện end card. */
+   private _noMoveTime = 0;
+   /** Người chơi đã di chuyển lần nào chưa. Chưa di chuyển thì không đếm giờ tự hiện end card. */
+   private _hasMoved = false;
    private _tutorialShown = false;
    private _ended = false;
 
@@ -120,8 +126,20 @@ export class UIController extends Component {
    }
 
    update(dt: number) {
+      if (this._ended || this._moving) {
+         return;
+      }
+      // Đã di chuyển ít nhất 1 lần mà sau đó đứng yên quá lâu -> tự hiện end card.
+      if (this._hasMoved) {
+         this._noMoveTime += dt;
+      }
+      if (this._hasMoved && this._noMoveTime >= this.idleEndCardTime) {
+         // Như bản gốc: hiện end card im lặng (không phát âm thanh thắng).
+         this.showEndCard(true);
+         return;
+      }
       // Đang đứng yên mà tutorial đã ẩn -> đếm giờ để nhắc lại.
-      if (this._ended || this._moving || this._tutorialShown) {
+      if (this._tutorialShown) {
          return;
       }
       this._idleTime += dt;
@@ -138,6 +156,8 @@ export class UIController extends Component {
       }
       this._moving = true;
       this._idleTime = 0;
+      this._noMoveTime = 0;
+      this._hasMoved = true;
       if (this._tutorialShown) {
          this.hideTutorial();
       }
@@ -302,12 +322,16 @@ export class UIController extends Component {
 
    // ---------------------------------------------------------------- End card
 
-   private showEndCard() {
+   /** silent = true: hiện end card vì người chơi không di chuyển, không tính là thắng (không phát âm thanh thắng). */
+   private showEndCard(silent?: boolean) {
       if (this._ended) {
          return;
       }
       this._ended = true;
-      eventTarget.emit(EVENTS.GAME_WIN);
+      // scheduleOnce truyền dt (số) vào tham số đầu -> chỉ coi là im lặng khi đúng bằng true.
+      if (silent !== true) {
+         eventTarget.emit(EVENTS.GAME_WIN);
+      }
       this.hideTutorial();
       if (!this.endCard) {
          return;
@@ -339,7 +363,6 @@ export class UIController extends Component {
    }
 
    private onCta() {
-      console.log("onCta", 1);
       Super_html_script.on_click_game_end();
       Super_html_script.on_click_download();
    }
