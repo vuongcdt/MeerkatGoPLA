@@ -13,10 +13,20 @@ export class JointStick extends Component {
    private ring: Node = null;
 
    private _touchPos: Vec3 = v3();
+   /** Khoá điều khiển trong lúc camera intro chạy (bản gốc: chờ INPUT_READY). */
+   private _ready = false;
 
    onLoad() {
       // Ẩn ngay từ đầu, chỉ hiện khi người chơi chạm vào màn hình.
       this.ring.active = false;
+      eventTarget.once(EVENTS.INPUT_READY, this.onInputReady, this);
+      // Phòng khi không có CameraIntro: không để game bị khoá mãi.
+      this.scheduleOnce(this.onInputReady, 3);
+   }
+
+   private onInputReady() {
+      this._ready = true;
+      this.unschedule(this.onInputReady);
    }
 
    start() {
@@ -32,9 +42,13 @@ export class JointStick extends Component {
       input.off(Input.EventType.TOUCH_MOVE, this.onTouchMove, this);
       input.off(Input.EventType.TOUCH_END, this.onTouchEnd, this);
       input.off(Input.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
+      eventTarget.off(EVENTS.INPUT_READY, this.onInputReady, this);
    }
 
    private onTouchStart(event: EventTouch) {
+      if (!this._ready) {
+         return;
+      }
       const touchPos = event.getUILocation().toVec3();
       this.ring.active = true;
       this.ring.worldPosition = touchPos;
@@ -43,6 +57,9 @@ export class JointStick extends Component {
    }
 
    private onTouchMove(event: EventTouch) {
+      if (!this._ready || !this.ring.active) {
+         return;
+      }
       const max = 75;
       const touchPos = event.getUILocation().toVec3();
       const ringPos = this.ring.worldPosition;
@@ -64,6 +81,9 @@ export class JointStick extends Component {
    }
 
    private onTouchEnd(event: EventTouch) {
+      if (!this.ring.active) {
+         return;
+      }
       this.ring.active = false;
       this.stick.position = v3(0, 0, 0);
       eventTarget.emit(EVENTS.STOP_MOVE);

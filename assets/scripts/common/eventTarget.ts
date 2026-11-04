@@ -17,4 +17,6 @@ export enum EVENTS {
    TARGET_COMPLETED,
    /** Hoàn thành tất cả mục tiêu (hiện end card). */
    GAME_WIN,
+   /** Hết hiệu ứng camera đầu game, cho phép điều khiển. */
+   INPUT_READY,
 }
