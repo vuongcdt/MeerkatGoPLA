@@ -6,7 +6,7 @@ import { BlockView } from "../views/BlockView";
 import { HoleConfig } from "../common/HoleConfig";
 const { ccclass, property } = _decorator;
 
-const SCALE_MOVE = 0.4;
+const SCALE_MOVE = 0.25;
 /** Ra khỏi bán kính hố đủ chừng này giây thì block trả về KINEMATIC (bản gốc: 3s). */
 const LEAVE_TIME = 3;
 /** Giới hạn vị trí của hố: mép mặt đất lùi vào 20 (như bản gốc) để không nhìn thấy đáy hố ở mép. */

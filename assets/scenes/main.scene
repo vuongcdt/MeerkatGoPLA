@@ -334,7 +334,7 @@
         "sampleCount": 4
       },
       "enableShadingScale": true,
-      "shadingScale": 0.75,
+      "shadingScale": 1,
       "bloom": {
         "enabled": false,
         "type": 0,
@@ -3322,7 +3322,7 @@
         "__id__": 196
       }
     ],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 199
