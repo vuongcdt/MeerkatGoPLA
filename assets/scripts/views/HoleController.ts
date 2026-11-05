@@ -7,7 +7,7 @@ const { ccclass, property } = _decorator;
 const BLOCK: number = PhysicsSystem.PhysicsGroup["BLOCK"];
 const BLOCK_DINAMIC: number = PhysicsSystem.PhysicsGroup["BLOCK_DINAMIC"];
 /** Giới hạn tốc độ block trong hố: chặn penetration / nổ solver dẫn tới NaN. */
-const MAX_SPEED = 60;
+const MAX_SPEED = 120;
 /** Block chìm sâu hơn mức này dưới mặt hố (đơn vị world) thì tính là đã bị nuốt, để UI cập nhật ngay. */
 const SWALLOW_DEPTH = -2;
 const _dir = new Vec3();

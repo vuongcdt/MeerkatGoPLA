@@ -315,7 +315,7 @@ export class LevelManager extends Component {
          }
          block.leaveTimer += dt;
          // Block đã nằm sát mặt đất và đứng yên thì không cần chờ lâu; block còn đang rơi/lăn/nằm trên cao vẫn chờ LEAVE_TIME.
-         let settledOnGround = block.leaveTimer >= GROUND_LEAVE_TIME && p.y < GROUND_HEIGHT && p.y >= 0 && block.isResting();
+         // let settledOnGround = block.leaveTimer >= GROUND_LEAVE_TIME && p.y < GROUND_HEIGHT && p.y >= 0 && block.isResting();
          // if (settledOnGround || block.leaveTimer >= LEAVE_TIME) {
          if (block.leaveTimer >= LEAVE_TIME) {
             block.setKinematic();
