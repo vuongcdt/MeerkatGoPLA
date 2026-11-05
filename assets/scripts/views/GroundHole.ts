@@ -13,6 +13,11 @@ export class GroundHole extends Component {
    @property
    private radius: number = 3;
 
+   /** Bán kính miệng hố hiện tại (world), theo scale của node Hole. */
+   get currentRadius() {
+      return this.radius * (this.hole ? this.hole.worldScale.x : 1);
+   }
+
    private _material: Material | null = null;
    private _center: Vec2 = new Vec2();
    private _lastX: number = NaN;

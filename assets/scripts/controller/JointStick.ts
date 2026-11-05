@@ -13,7 +13,7 @@ export class JointStick extends Component {
    private ring: Node = null;
 
    private _touchPos: Vec3 = v3();
-   /** Khoá điều khiển trong lúc camera intro chạy (bản gốc: chờ INPUT_READY). */
+   /** Khoá điều khiển trong lúc camera intro chạy (chờ INPUT_READY). */
    private _ready = false;
 
    onLoad() {

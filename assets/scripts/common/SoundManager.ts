@@ -3,7 +3,7 @@ import { EVENTS, eventTarget } from "./eventTarget";
 const { ccclass, property } = _decorator;
 
 /**
- * Âm thanh game, theo AudioManager của bản gốc:
+ * Âm thanh game:
  * - Nhạc nền lặp (volume 0.3). Trình duyệt / mạng quảng cáo chặn tự phát tiếng nên lần chạm đầu tiên
  *   sẽ resume AudioContext và phát lại nhạc nền nếu chưa chạy.
  * - SFX: mỗi clip có một nhóm AudioSource dùng xoay vòng (nhiều block bị nuốt cùng lúc vẫn kêu được),

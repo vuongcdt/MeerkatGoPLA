@@ -3,13 +3,13 @@ import { EVENTS, eventTarget } from "../common/eventTarget";
 const { ccclass, property } = _decorator;
 
 /**
- * Chạy chuỗi khung hình trên SpriteRenderer (bản gốc: RunAnimFrame của FxGrow).
+ * Chạy chuỗi khung hình trên SpriteRenderer.
  * Mỗi khung `frameTime` giây, chạy hết thì ẩn. Lúc thường ẩn hẳn.
  */
 @ccclass("FrameAnim")
 export class FrameAnim extends Component {
    @property([SpriteFrame]) frames: SpriteFrame[] = [];
-   /** Giây mỗi khung (bản gốc 0.02) */
+   /** Giây mỗi khung (mặc định 0.02) */
    @property frameTime = 0.02;
    /** Tự chạy khi hố lên level */
    @property playOnLevelUp = true;

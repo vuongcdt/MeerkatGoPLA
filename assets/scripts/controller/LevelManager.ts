@@ -1,15 +1,37 @@
-import { _decorator, Collider, Component, director, game, instantiate, Material, MeshRenderer, Node, PhysicsSystem, Prefab, ResolutionPolicy, screen, TextAsset, v3, Vec3, view } from "cc";
+import {
+   _decorator,
+   Collider,
+   Component,
+   director,
+   game,
+   instantiate,
+   Material,
+   MeshRenderer,
+   Node,
+   PhysicsSystem,
+   Prefab,
+   ResolutionPolicy,
+   screen,
+   TextAsset,
+   v3,
+   Vec3,
+   view,
+} from "cc";
 import { simpleDecryptContent } from "../decryptContent";
 import { ItemSpawn, Level, SpawnData } from "./GameModel";
 import { EVENTS, eventTarget } from "../common/eventTarget";
 import { BlockView } from "../views/BlockView";
 import { HoleConfig } from "../common/HoleConfig";
+import { PREVIEW } from "cc/env";
 const { ccclass, property } = _decorator;
 
 const SCALE_MOVE = 0.25;
-/** Ra khỏi bán kính hố đủ chừng này giây thì block trả về KINEMATIC (bản gốc: 3s). */
+/** Ra khỏi bán kính hố đủ chừng này giây thì block trả về KINEMATIC. */
 const LEAVE_TIME = 3;
-/** Giới hạn vị trí của hố: mép mặt đất lùi vào 20 (như bản gốc) để không nhìn thấy đáy hố ở mép. */
+/** Block đã nằm sát mặt đất (y world nhỏ hơn mức này) và đứng yên thì chỉ cần ngoài bán kính chừng này giây là về KINEMATIC. */
+const GROUND_LEAVE_TIME = 1;
+const GROUND_HEIGHT = 5;
+/** Giới hạn vị trí của hố: mép mặt đất lùi vào 20 để không nhìn thấy đáy hố ở mép. */
 const MIN_X = -189;
 const MAX_X = 178;
 const MIN_Z = -64;
@@ -22,7 +44,7 @@ const cellOf = (v: number) => Math.floor(v / CELL);
 const cellKey = (cx: number, cz: number) => (cx + 32768) * 65536 + (cz + 32768);
 
 /**
- * Collision matrix giống bản gốc (trùng với settings/v2/packages/project.json):
+ * Collision matrix (trùng với settings/v2/packages/project.json):
  * GROUND: GROUND|BLOCK; HOLE: HOLE|BLOCK|BLOCK_DINAMIC; BLOCK: GROUND|HOLE|BLOCK|BLOCK_DINAMIC; BLOCK_DINAMIC: HOLE|BLOCK|BLOCK_DINAMIC.
  * Áp lại lúc chạy để không phụ thuộc editor đã nạp project.json chưa (editor giữ settings cũ trong bộ nhớ
  * thì preview vẫn dùng matrix cũ -> sàn hố không đỡ block BLOCK -> block rơi xuyên).
@@ -69,9 +91,9 @@ export class LevelManager extends Component {
          game.restart();
       });
       this._grountMaterial = this.goundMesh?.getSharedMaterial(0);
-      // Hố bản gốc ở (4, 0, 0) -> đổi sang hệ toạ độ đã xoay 180° quanh Y của level.
+      // Hố nằm ở (4, 0, 0) trong toạ độ dữ liệu level -> đổi sang hệ toạ độ đã xoay 180° quanh Y.
       this.hole.position = v3(-4, 0.01, 0);
-            this.resize();
+      this.resize();
       screen.on("window-resize", this.resize, this);
    }
 
@@ -128,7 +150,7 @@ export class LevelManager extends Component {
             const pos = v3(-s.p.x, s.p.y, s.p.z);
 
             // Đặt transform trước khi gắn vào scene để body vật lý được tạo đúng vị trí.
-            // Bản gốc đặt (p.x, p.y, -p.z); ở đây đặt (-p.x, p.y, p.z) = cả level xoay 180° quanh Y,
+            // Level đặt theo (-p.x, p.y, p.z) = cả level xoay 180° quanh Y,
             // nên mỗi model cũng phải quay thêm 180° quanh Y (euler Cocos theo thứ tự Y-Z-X nên cộng vào r.y).
             node.eulerAngles = v3(s.r.x, s.r.y + 180, s.r.z);
             node.setScale(v3(s.s.x, s.s.y, s.s.z));
@@ -159,7 +181,7 @@ export class LevelManager extends Component {
       this.forget(block);
    }
 
-   /** Block đã lọt xuống hố (bản gốc: GameLevel.removeItems): thôi theo dõi để nó rơi tiếp, không bị trả về KINEMATIC. */
+   /** Block đã lọt xuống hố: thôi theo dõi để nó rơi tiếp, không bị trả về KINEMATIC. */
    private onBlockEaten(node: Node) {
       const block = node?.getComponent(BlockView);
       if (block) {
@@ -202,7 +224,10 @@ export class LevelManager extends Component {
    /** Bật vật lý cho block trong vùng quanh hố, tắt cho vùng hố vừa rời đi. Chỉ chạy khi hố đổi ô hoặc đổi bán kính. */
    private updatePhysicsArea(hx: number, hz: number, radius: number) {
       const reach = radius + PHYSICS_MARGIN;
-      const x0 = cellOf(hx - reach), x1 = cellOf(hx + reach), z0 = cellOf(hz - reach), z1 = cellOf(hz + reach);
+      const x0 = cellOf(hx - reach),
+         x1 = cellOf(hx + reach),
+         z0 = cellOf(hz - reach),
+         z1 = cellOf(hz + reach);
       const area = `${x0},${x1},${z0},${z1}`;
       if (area === this._physicsArea) {
          return;
@@ -234,11 +259,11 @@ export class LevelManager extends Component {
 
    private onStopMove() {
       this._dirMove = v3();
-      // console.log("this.hole.position", this.hole.position);
+      PREVIEW && console.log("this.hole.position", this.hole.position);
    }
 
    protected update(dt: number): void {
-      // Giống bản gốc (GameLevel.update): chạy mọi frame, không ẩn block nào (engine tự cull khi render).
+      // Chạy mọi frame, không ẩn block nào (engine tự cull khi render).
       // Trong bán kính hố -> DYNAMIC; ra ngoài đủ LEAVE_TIME giây -> KINEMATIC.
       // Chỉ xét block trong các ô quanh hố + block đang DYNAMIC (lưới ô CELL), kết quả giống duyệt cả level.
       const holePos = this.hole.worldPosition;
@@ -248,7 +273,10 @@ export class LevelManager extends Component {
       this.updatePhysicsArea(hx, hz, radius);
 
       // Block đứng yên trong bán kính hút -> DYNAMIC, chuyển sang danh sách dynamic.
-      const x0 = cellOf(hx - radius), x1 = cellOf(hx + radius), z0 = cellOf(hz - radius), z1 = cellOf(hz + radius);
+      const x0 = cellOf(hx - radius),
+         x1 = cellOf(hx + radius),
+         z0 = cellOf(hz - radius),
+         z1 = cellOf(hz + radius);
       for (let cx = x0; cx <= x1; cx++) {
          for (let cz = z0; cz <= z1; cz++) {
             const list = this._cells.get(cellKey(cx, cz));
@@ -286,6 +314,9 @@ export class LevelManager extends Component {
             return;
          }
          block.leaveTimer += dt;
+         // Block đã nằm sát mặt đất và đứng yên thì không cần chờ lâu; block còn đang rơi/lăn/nằm trên cao vẫn chờ LEAVE_TIME.
+         let settledOnGround = block.leaveTimer >= GROUND_LEAVE_TIME && p.y < GROUND_HEIGHT && p.y >= 0 && block.isResting();
+         // if (settledOnGround || block.leaveTimer >= LEAVE_TIME) {
          if (block.leaveTimer >= LEAVE_TIME) {
             block.setKinematic();
             this._dynamic.delete(block);
@@ -307,7 +338,7 @@ export class LevelManager extends Component {
       this.hole.setPosition(x, pos.y, z);
    }
 
-    private resize() {
+   private resize() {
       const { width, height } = screen.windowSize;
       const design = view.getDesignResolutionSize();
       const fitHeight = width > height || width / height > design.width / design.height;

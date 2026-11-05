@@ -1,6 +1,7 @@
-import { _decorator, Camera, Collider, Component, ITriggerEvent, Node, PhysicsSystem, RigidBody, Tween, tween, v3, Vec3 } from "cc";
+import { _decorator, Camera, Collider, Component, director, ITriggerEvent, Node, PhysicsSystem, RigidBody, Tween, tween, v3, Vec3 } from "cc";
 import { EVENTS, eventTarget } from "../common/eventTarget";
 import { HoleConfig } from "../common/HoleConfig";
+import { GroundHole } from "./GroundHole";
 const { ccclass, property } = _decorator;
 
 const BLOCK: number = PhysicsSystem.PhysicsGroup["BLOCK"];
@@ -13,7 +14,7 @@ const _dir = new Vec3();
 const _vel = new Vec3();
 
 /**
- * Cách nuốt block giống bản gốc (HoleController của PLA ref):
+ * Cách nuốt block:
  * - Trigger hình cầu quanh miệng hố: block lọt vào thì đổi sang group BLOCK_DINAMIC
  *   (không va chạm ground, chỉ va chạm sàn hố + block khác) nên rơi được qua lỗ. Ra khỏi trigger thì trả về BLOCK.
  * - Mỗi frame hút các block trong trigger về tâm hố và xuống dưới, giới hạn vận tốc.
@@ -30,6 +31,8 @@ export class HoleController extends Component {
    @property(Collider) private eatCollider: Collider | null = null;
    /** Camera lùi ra khi lên level */
    @property(Camera) private camera: Camera | null = null;
+   /** Block nằm trên miệng hố (tâm block trong bán kính miệng) bị kéo mạnh gấp chừng này lần lực thường, để rơi xuống nhanh. */
+   @property mouthForceScale = 10;
 
    private _inside = new Set<Node>();
    /** Chống đếm 2 lần nếu block chạm EatZone nhiều nhịp. */
@@ -42,6 +45,7 @@ export class HoleController extends Component {
    private _cameraStartPos = v3();
    private _scaleTween: Tween<Node> | null = null;
    private _cameraTween: Tween<Node> | null = null;
+   private _groundHole: GroundHole | null = null;
 
    get level() {
       return this._level;
@@ -53,10 +57,27 @@ export class HoleController extends Component {
    }
 
    onLoad() {
+      this._groundHole = director.getScene().getComponentInChildren(GroundHole);
+      // Tham chiếu collider trong scene có thể bị null khi nạp (preview): tự tìm lại để trigger hố luôn hoạt động.
+      this.collider ??= this.getComponent(Collider);
+      this.eatCollider ??= this.findByName(director.getScene(), "EatZone")?.getComponent(Collider) ?? null;
       this._baseScale = this.node.scale.x;
       if (this.camera) {
          this._cameraStartPos.set(this.camera.node.position);
       }
+   }
+
+   private findByName(node: Node, name: string): Node | null {
+      if (node.name === name) {
+         return node;
+      }
+      for (const child of node.children) {
+         const found = this.findByName(child, name);
+         if (found) {
+            return found;
+         }
+      }
+      return null;
    }
 
    onEnable() {
@@ -91,7 +112,7 @@ export class HoleController extends Component {
       this._xp = 0;
       eventTarget.emit(EVENTS.LEVEL_UP, this._level);
 
-      // Hố to ra, nảy quá một chút rồi về đúng cỡ (bản gốc: HoleController.growth).
+      // Hố to ra, nảy quá một chút rồi về đúng cỡ.
       const scale = this._baseScale * HoleConfig.getScale(this._level);
       const overScale = this._baseScale * (HoleConfig.getScale(this._level) + 0.15);
       this._scaleTween?.stop();
@@ -100,7 +121,7 @@ export class HoleController extends Component {
          .to(0.4, { scale: v3(scale, scale, scale) }, { easing: "sineOut" })
          .start();
 
-      // Camera lùi ra (bản gốc: CameraController.levelUp) và nhìn xa hơn.
+      // Camera lùi ra và nhìn xa hơn.
       if (this.camera) {
          const target = this._cameraStartPos.clone().multiplyScalar(Math.pow(HoleConfig.cameraGrowth, this._level));
          const overshoot = target.clone().multiplyScalar(1.08);
@@ -143,6 +164,9 @@ export class HoleController extends Component {
 
    update() {
       const holePos = (this.center ?? this.node).worldPosition;
+      // Bán kính miệng hố hiện tại (world), giống lỗ cắt trên mặt đất.
+      const mouth = this._groundHole ? this._groundHole.currentRadius : 3 * this.node.worldScale.x;
+      const mouthSqr = mouth * mouth;
       this._eaten.forEach((node) => {
          if (!node.isValid) {
             this._eaten.delete(node);
@@ -165,7 +189,7 @@ export class HoleController extends Component {
          const objPos = node.worldPosition;
 
          // Chìm xuống dưới mặt hố thì báo UI ngay, không chờ block rơi tới đáy (y ~ -70 / -85, mất > 1 giây).
-         // Bản gốc cũng tính "đã ăn" khi qua mốc y = -2.
+         // Mốc "đã nuốt" tính khi qua y = -2.
          if (objPos.y < holePos.y + SWALLOW_DEPTH && !this._swallowed.has(node)) {
             this._swallowed.add(node);
             eventTarget.emit(EVENTS.BLOCK_SWALLOWED, node);
@@ -190,7 +214,14 @@ export class HoleController extends Component {
 
          // Kẹp mẫu số: tránh lực vô cực khi block sát tâm hố.
          const clampedDist = Math.max(dist, 2);
-         _dir.multiplyScalar(500 / (clampedDist * clampedDist));
+         let force = 500 / (clampedDist * clampedDist);
+         // Block đang nằm trên miệng hố (tâm trong bán kính miệng): kéo mạnh hơn nhiều để tụt xuống ngay.
+         const hx = holePos.x - objPos.x;
+         const hz = holePos.z - objPos.z;
+         if (hx * hx + hz * hz < mouthSqr) {
+            force *= this.mouthForceScale;
+         }
+         _dir.multiplyScalar(force);
          rigid.applyForce(_dir);
 
          rigid.getLinearVelocity(_vel);

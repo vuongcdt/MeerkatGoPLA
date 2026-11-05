@@ -7,10 +7,10 @@ const { ccclass, property } = _decorator;
 const _tmp = v3();
 
 /**
- * Nhãn "LV. n" + thanh XP ở miệng hố (bản gốc: HoleLevel).
+ * Nhãn "LV. n" + thanh XP ở miệng hố.
  * Mỗi frame chiếu điểm `anchor` (node 3D nằm dưới miệng hố, là con của Visual nên tự xuống thấp khi hố to ra)
  * ra toạ độ UI rồi đặt node này vào đó.
- * Mỗi block bị nuốt hiện chữ "+n" bay lên phía trên nhãn (bản gốc: FloatingText).
+ * Mỗi block bị nuốt hiện chữ "+n" bay lên phía trên nhãn.
  */
 @ccclass("HoleLevelUI")
 export class HoleLevelUI extends Component {
@@ -24,7 +24,7 @@ export class HoleLevelUI extends Component {
    @property(Label) levelLabel: Label | null = null;
    /** Thanh XP (Sprite kiểu FILLED) */
    @property(Sprite) xpFill: Sprite | null = null;
-   /** Node chứa chữ "+n" bay lên (bản gốc: ParentFloating) */
+   /** Node chứa chữ "+n" bay lên */
    @property(Node) floatingParent: Node | null = null;
    /** Số chữ "+n" hiện cùng lúc tối đa (nuốt hàng loạt không bị rối màn hình) */
    @property maxFloating = 15;
@@ -71,7 +71,7 @@ export class HoleLevelUI extends Component {
       }
       const label = this._pool.pop() ?? this.createFloating();
       this._active++;
-      // Như bản gốc: lệch ngẫu nhiên ±30px, bay lên 20..40px trong 0.5s rồi biến mất.
+      // Lệch ngẫu nhiên ±30px, bay lên 20..40px trong 0.5s rồi biến mất.
       const p = this.floatingParent.position;
       const x = p.x + (Math.random() - 0.5) * 60;
       const y = p.y + (Math.random() - 0.5) * 60;
@@ -90,7 +90,7 @@ export class HoleLevelUI extends Component {
          .start();
    }
 
-   /** Chữ "+n": cỡ 40, đậm, trắng viền đen 2px (giống prefab Floating của bản gốc). */
+   /** Chữ "+n": cỡ 40, đậm, trắng viền đen 2px. */
    private createFloating(): Label {
       const n = new Node("Floating");
       n.layer = this.floatingParent!.layer;

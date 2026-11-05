@@ -6,7 +6,7 @@ const RESTING_SPEED = 0.5;
 const _vel = new Vec3();
 
 /**
- * Set RigidBody giống bản gốc (GameLevel.setDynamicObject / setKinematicObject):
+ * Set RigidBody:
  * prefab để KINEMATIC, không gravity; vào gần hố thì chuyển DYNAMIC đúng 1 lần.
  * Group BLOCK <-> BLOCK_DINAMIC do HoleController đổi khi block vào/ra trigger của hố.
  */

@@ -2,6 +2,7 @@ import { _decorator, Component, Label, Node, Tween, tween, UIOpacity, v3, Vec3 }
 import { EVENTS, eventTarget } from "../common/eventTarget";
 import { BlockView } from "../views/BlockView";
 import Super_html_script from "../PLA/Super_html_script";
+import { PREVIEW } from "cc/env";
 const { ccclass, property } = _decorator;
 
 /**
@@ -41,11 +42,11 @@ export class UIController extends Component {
    @property handLoopDuration = 1.6;
    /** Lệch thêm của bàn tay so với đường số 8 (px), để đầu ngón tay nằm đúng trên nét vẽ */
    @property handOffset: Vec3 = v3();
-   /** Chữ "Slide to move": phóng to/thu nhỏ 2 nhịp mỗi vòng bàn tay (như bản gốc) */
+   /** Chữ "Slide to move": phóng to/thu nhỏ 2 nhịp mỗi vòng bàn tay */
    @property(Node) tutorialText: Node = null;
-   /** Mức phóng to của chữ tutorial (bản gốc 1.2) */
+   /** Mức phóng to của chữ tutorial (mặc định 1.2) */
    @property tutorialTextPulse = 1.2;
-   /** Các nút Play Now: nhịp "đập" liên tục (như bản gốc) */
+   /** Các nút Play Now: nhịp "đập" liên tục */
    @property([Node]) playButtons: Node[] = [];
 
    /** Type block (index trong listItemSpawns) của từng mục tiêu; index trùng với `totalItems` / `checks` / `_totals`. */
@@ -87,7 +88,7 @@ export class UIController extends Component {
    }
 
    /**
-    * Nhịp "đập" của nút Play Now, chép clip Scale của bản gốc (1.27s/chu kỳ):
+    * Nhịp "đập" của nút Play Now (1.27s/chu kỳ):
     * to dần lên 1.163 (0.72s) -> bóp nhanh 0.938 (0.1s) -> về 1 (0.06s) -> đứng yên tới hết chu kỳ.
     * Nhân theo scale gốc của từng nút.
     */
@@ -134,7 +135,7 @@ export class UIController extends Component {
          this._noMoveTime += dt;
       }
       if (this._hasMoved && this._noMoveTime >= this.idleEndCardTime) {
-         // Như bản gốc: hiện end card im lặng (không phát âm thanh thắng).
+         // Hiện end card im lặng (không phát âm thanh thắng).
          this.showEndCard(true);
          return;
       }
@@ -183,7 +184,7 @@ export class UIController extends Component {
          }
       }
 
-      // Chữ tutorial phóng to/thu nhỏ 2 nhịp mỗi vòng bàn tay (bản gốc: 1 -> 1.2 -> 1 -> 1.2 -> 1 trong 1 vòng).
+      // Chữ tutorial phóng to/thu nhỏ 2 nhịp mỗi vòng bàn tay (1 -> 1.2 -> 1 -> 1.2 -> 1 trong 1 vòng).
       if (this.tutorialText) {
          const b = this._textBaseScale;
          const big = v3(b.x * this.tutorialTextPulse, b.y * this.tutorialTextPulse, b.z);
@@ -363,6 +364,7 @@ export class UIController extends Component {
    }
 
    private onCta() {
+      PREVIEW && (this.endCard.active = false);
       Super_html_script.on_click_game_end();
       Super_html_script.on_click_download();
    }

@@ -3,20 +3,20 @@ import { EVENTS, eventTarget } from "../common/eventTarget";
 const { ccclass, property } = _decorator;
 
 /**
- * Hiệu ứng camera đầu game (bản gốc: CameraController.intro):
+ * Hiệu ứng camera đầu game:
  * camera bắt đầu cao hơn + lùi xa hơn, góc nhìn thoải hơn, rồi trượt về vị trí chơi trong `introTime` giây.
  * Hết intro thì báo EVENTS.INPUT_READY để mở khoá điều khiển.
  * Gắn lên Main Camera (con của Hole), làm việc với vị trí / góc local.
  */
 @ccclass("CameraIntro")
 export class CameraIntro extends Component {
-   /** Thời gian intro (giây), bản gốc 1.5 */
+   /** Thời gian intro (giây), mặc định 1.5 */
    @property introTime = 1.5;
    /** Cao hơn vị trí chơi lúc bắt đầu */
    @property raise = 10;
    /** Lùi xa hơn vị trí chơi lúc bắt đầu */
    @property back = 10;
-   /** Góc nhìn xuống lúc bắt đầu (độ), bản gốc -39 */
+   /** Góc nhìn xuống lúc bắt đầu (độ), mặc định -39 */
    @property introPitch = -39;
 
    start() {

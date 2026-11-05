@@ -1,4 +1,4 @@
-/** Thông số hố, chép từ LevelConfig / ItemConfig của bản gốc. */
+/** Thông số hố (LevelConfig / ItemConfig). */
 export const HoleConfig = {
    /** XP cần để lên level tiếp theo. Vượt quá mảng thì dùng mốc cuối. */
    requiredXP: [10, 20, 70, 100, 130, 400, 450, 500, 600, 700, 800, 950, 1100, 1300, 1500, 1750, 2000, 2250, 2500],
