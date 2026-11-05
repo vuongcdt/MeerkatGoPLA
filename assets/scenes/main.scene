@@ -2624,7 +2624,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": -70,
+      "y": -20,
       "z": 0
     },
     "_lrot": {
@@ -2726,7 +2726,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": -85.611,
+      "y": -20,
       "z": 0
     },
     "_lrot": {
@@ -2764,7 +2764,7 @@
     "__prefab": null,
     "_materials": [
       {
-        "__uuid__": "620b6bf3-0369-4560-837f-2a2c00b73c26",
+        "__uuid__": "a63c6c09-7056-4db1-b8ca-6fc4bd531074",
         "__expectedType__": "cc.Material"
       }
     ],

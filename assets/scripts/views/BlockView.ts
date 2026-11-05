@@ -1,5 +1,9 @@
-import { _decorator, BoxCollider, Component, MeshRenderer, RigidBody } from "cc";
+import { _decorator, BoxCollider, Component, MeshRenderer, RigidBody, Vec3 } from "cc";
 const { ccclass, property } = _decorator;
+
+/** Tốc độ (đơn vị world/giây) dưới mức này thì coi block là đã đứng yên. */
+const RESTING_SPEED = 0.5;
+const _vel = new Vec3();
 
 /**
  * Set RigidBody giống bản gốc (GameLevel.setDynamicObject / setKinematicObject):
@@ -64,6 +68,16 @@ export class BlockView extends Component {
       rb.linearDamping = 0.1;
       rb.angularDamping = 0.1;
       rb.useCCD = true; // chống xuyên collider nhỏ -> penetration -> NaN
+   }
+
+   /** Block gần như đứng yên (tốc độ thẳng nhỏ hơn RESTING_SPEED), an toàn để đóng băng sang KINEMATIC. */
+   isResting() {
+      const rb = this.rigidBody;
+      if (!rb) {
+         return true;
+      }
+      rb.getLinearVelocity(_vel);
+      return _vel.lengthSqr() < RESTING_SPEED * RESTING_SPEED;
    }
 
    setKinematic() {
