@@ -1,4 +1,5 @@
 import { _decorator, CCInteger, Component, game, instantiate, Node, PhysicsSystem, Prefab, RigidBody, v3, Vec3 } from "cc";
+import { LitePhysics } from "./LitePhysics";
 import { SimplePhysics } from "./SimplePhysics";
 import { EVENTS, eventTarget } from "../scripts/common/eventTarget";
 const { ccclass, property } = _decorator;
@@ -9,22 +10,26 @@ export class GameController extends Component {
    @property(Node) private hole: Node | null = null;
    @property(Prefab) private cubeSimple: Prefab | null = null;
    @property(Prefab) private cubePhysic: Prefab | null = null;
-   @property(Node) private dynamicBtn: Node | null = null;
-   @property(Node) private dropBtn: Node | null = null;
+   @property(Node) private physicBtn: Node | null = null;
+   @property(Node) private simpleBtn: Node | null = null;
+   @property(Node) private liteBtn: Node | null = null;
    @property(Node) private resetBtn: Node | null = null;
 
-   private _physics = new SimplePhysics();
+   private _simple = new SimplePhysics();
+   private _lite = new LitePhysics();
    private _cubeRigis: RigidBody[] = [];
    private _dirMove: Vec3 = v3();
 
    start() {
-      // Cùng gravity cho cả 2 physic.
-      this._physics.gravity = -20;
+      // Cùng gravity cho cả 3 physic.
+      this._simple.gravity = -20;
+      this._lite.gravity = -20;
       PhysicsSystem.instance.gravity = v3(0, -20, 0);
       this.init();
-      // dynamicBtn: physic tự viết. dropBtn: physic của engine.
-      this.dropBtn.on("click", () => (this._physics.running = true));
-      this.dynamicBtn.on("click", () => this._cubeRigis.forEach((rigidBody) => (rigidBody.type = RigidBody.Type.DYNAMIC)));
+      // physicBtn: physic của engine. simpleBtn: SimplePhysics (va chạm cầu). liteBtn: LitePhysics (heightfield).
+      this.physicBtn.on("click", () => this._cubeRigis.forEach((rigidBody) => (rigidBody.type = RigidBody.Type.DYNAMIC)));
+      this.simpleBtn.on("click", () => (this._simple.running = true));
+      this.liteBtn.on("click", () => (this._lite.running = true));
       this.resetBtn.on("click", () => game.restart());
       eventTarget.on(EVENTS.PLAYER_MOVE, this.onPlayerMove, this);
       eventTarget.on(EVENTS.STOP_MOVE, this.onStopMove, this);
@@ -33,12 +38,14 @@ export class GameController extends Component {
    }
 
    private async init() {
-      // Hai cụm khối giống hệt nhau, đặt cạnh nhau để so sánh.
-      this.spawnGrid(this.cubeSimple!, -1, (node) => this._physics.addBody(node));
-      this.spawnGrid(this.cubePhysic!, 1, (node) => {
+      // Ba cụm khối giống hệt nhau, đặt cạnh nhau để so sánh (trái -> phải: Simple, engine, Lite).
+      // Simple và Lite dùng prefab không có RigidBody/Collider.
+      this.spawnGrid(this.cubePhysic!, -3, (node) => {
          const rigidBody = node.getComponent(RigidBody)!;
          this._cubeRigis.push(rigidBody);
       });
+      this.spawnGrid(this.cubeSimple!, 0, (node) => this._simple.addBody(node));
+      this.spawnGrid(this.cubeSimple!, 3, (node) => this._lite.addBody(node));
    }
 
    private spawnGrid(prefab: Prefab, startX: number, onSpawn: (node: Node) => void) {
@@ -63,10 +70,11 @@ export class GameController extends Component {
    }
 
    protected update(dt: number): void {
-      this._physics.update(dt);
+      this._simple.update(dt);
+      this._lite.update(dt);
 
       if (this._dirMove.length() > 0) {
-         const offset = 0.2;
+         const offset = 0.1;
          if (this.hole) {
             const camPos = this.hole.position;
             this.hole.position = v3(camPos.x + this._dirMove.x * offset, camPos.y, camPos.z + this._dirMove.z * offset);
