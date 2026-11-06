@@ -124,7 +124,7 @@ export class GameController extends Component {
       this.spawnGrid(this.cubeSimple!, -2, 2, (node) => {
          this._custom.addBody(node);
       });
-      console.log('this._custom', this._custom._voxel)
+      console.log("this._custom", this._custom._voxel);
    }
 
    private spawnGrid(prefab: Prefab, startX: number, startZ: number, onSpawn: (node: Node) => void) {
@@ -132,7 +132,7 @@ export class GameController extends Component {
          for (let j = 0; j < 4; j++) {
             for (let k = 0; k < this.rows; k++) {
                const node = instantiate(prefab);
-               node.setPosition(v3(startX + i * 0.4, k * 0.4 + 5, startZ + j * 0.4));
+               node.setPosition(v3(startX + i * 0.4, k * 0.4 + 0.3, startZ + j * 0.4));
                this.node.addChild(node);
                onSpawn(node);
             }
@@ -159,7 +159,7 @@ export class GameController extends Component {
       if (this._simple.running) this._statSimple.add(t1 - t0, dt);
       if (this._lite.running) this._statLite.add(t2 - t1, dt);
       if (this._engineRunning) this._statEngine.add(this._engineMs, dt);
-      if(this._custom.running) this._statCustom.add(t3 - t2, dt)
+      if (this._custom.running) this._statCustom.add(t3 - t2, dt);
       this._engineMs = 0;
 
       if (this._dirMove.length() > 0) {
