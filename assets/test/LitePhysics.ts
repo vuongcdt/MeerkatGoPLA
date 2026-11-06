@@ -1,6 +1,10 @@
 import { Node, Quat, v3, Vec3 } from "cc";
+import { GroundBox } from "./GroundBox";
 
 type BodyState = "free" | "settle" | "rest";
+
+/** Độ cao "không có ground" của một ô: khối đi vào ô này sẽ rơi tiếp. */
+const NO_GROUND = -1e9;
 
 /** Một cột khối xếp chồng trên một ô lưới. */
 class Column {
@@ -31,8 +35,6 @@ export class LiteBody {
 }
 
 const _q = new Quat();
-const _t = new Quat();
-const _e = new Vec3();
 const _axis = new Vec3();
 
 const NEIGHBORS: ReadonlyArray<readonly [number, number]> = [
@@ -51,11 +53,16 @@ const NEIGHBORS: ReadonlyArray<readonly [number, number]> = [
  * - Khối rơi tự do dưới trọng lực, chạm mặt đống thì nảy (restitution) và bị hất ngang ngẫu nhiên.
  * - Khi hết nảy: nếu ô bên cạnh thấp hơn quá `maxStep` khối thì trượt sang đó, ngược lại xếp vào cột của ô và nằm yên.
  * - Khối nằm yên không tốn gì (không tính toán, không ghi node). Chi phí mỗi frame ~ số khối đang chuyển động.
+ * - Ground là các box tĩnh (addGround, đọc từ node ở runtime): độ cao nền của mỗi ô = mặt trên của box cao nhất phủ tâm ô.
+ *   Ô không có box thì không có nền: khối rơi tiếp (rơi dưới killY thì bị gỡ).
  * Giả định: mọi khối có cùng kích thước (lấy từ khối đầu tiên). Các khối đang bay không va chạm nhau.
  */
 export class LitePhysics {
    public gravity = -10;
-   public groundY = 0;
+   /** Body rơi thấp hơn độ cao này (world Y) thì bị gỡ khỏi mô phỏng (đã rơi khỏi ground). */
+   public killY = -30;
+   /** Gọi sau khi một body bị gỡ vì rơi xuống dưới killY (ví dụ để ẩn/hủy node). */
+   public onFall: ((node: Node) => void) | null = null;
    public restitution = 0.3;
    /** Va chạm chậm hơn ngưỡng này (m/s) thì không nảy nữa. */
    public bounceThreshold = 1.5;
@@ -79,6 +86,10 @@ export class LitePhysics {
 
    private readonly _bodies: LiteBody[] = [];
    private readonly _columns = new Map<number, Column>();
+   private readonly _grounds: GroundBox[] = [];
+   /** Cache độ cao nền của từng ô (key -> độ cao hoặc NO_GROUND). Xóa khi ground đổi. */
+   private readonly _baseCache = new Map<number, number>();
+   private readonly _fallen: LiteBody[] = [];
    private _cell = 0;
    private _cubeH = 0;
    private _seed = 20240601;
@@ -118,16 +129,74 @@ export class LitePhysics {
    public clear() {
       this._bodies.length = 0;
       this._columns.clear();
+      this._grounds.length = 0;
+      this._baseCache.clear();
+   }
+
+   /** Thêm một box tĩnh làm ground, đọc từ node ở runtime (xem GroundBox). Chỗ nào không có box thì khối rơi tiếp. */
+   public addGround(node: Node, size?: Vec3, center?: Vec3): GroundBox {
+      const g = new GroundBox(node, size, center);
+      this._grounds.push(g);
+      this._baseCache.clear();
+      return g;
+   }
+
+   /** Gỡ box ground của node và đánh thức các khối để chúng rơi nếu mất chỗ đỡ. */
+   public removeGround(node: Node) {
+      const index = this._grounds.findIndex((g) => g.node === node);
+      if (index < 0) return;
+      this._grounds.splice(index, 1);
+      this._baseCache.clear();
+      this.wakeAll();
+   }
+
+   /** Tự đọc lại box của các node ground mỗi frame (ground bị di chuyển/đổi kích thước thì cập nhật). Tắt nếu ground chắc chắn đứng yên. */
+   public autoSyncGrounds = true;
+
+   /** Đọc lại box của mọi node ground; nếu có box đổi thì xóa cache nền và cho các khối rơi lại. Trả về true nếu có thay đổi. */
+   public refreshGrounds(): boolean {
+      let changed = false;
+      for (const g of this._grounds) {
+         if (g.sync()) changed = true;
+      }
+      if (changed) {
+         this._baseCache.clear();
+         this.wakeAll();
+      }
+      return changed;
+   }
+
+   /** Cho mọi khối rơi lại từ vị trí hiện tại (dùng khi ground đổi). Khối thấp xử lý trước để cột không bị đảo thứ tự. */
+   public wakeAll() {
+      this._columns.clear();
+      this._bodies.sort((p, q) => p.pos.y - q.pos.y);
+      for (const b of this._bodies) {
+         if (b.state === "free") continue; // đang rơi/nảy thì giữ nguyên vận tốc
+         b.column = null;
+         b.state = "free";
+         b.vel.set(0, 0, 0);
+         b.spin.set(0, 0, 0);
+      }
    }
 
    public update(dt: number) {
       if (!this.running) return;
+      if (this.autoSyncGrounds) this.refreshGrounds();
       dt = Math.min(dt, 1 / 30);
       for (const b of this._bodies) {
          if (b.state === "rest") continue;
          if (b.state === "free") this.stepFree(b, dt);
          else this.stepSettle(b, dt);
          this.writeNode(b);
+         if (b.pos.y < this.killY) this._fallen.push(b); // gỡ sau khi hết vòng lặp (đang duyệt mảng)
+      }
+
+      if (this._fallen.length > 0) {
+         for (const b of this._fallen) {
+            this.removeBody(b.node);
+            this.onFall?.(b.node);
+         }
+         this._fallen.length = 0;
       }
    }
 
@@ -142,10 +211,28 @@ export class LitePhysics {
       return (ix + 4096) * 8192 + (iz + 4096);
    }
 
-   /** Độ cao mặt trên của ô (ix, iz). */
+   /** Độ cao nền (mặt trên box ground cao nhất phủ tâm ô) của ô (ix, iz), hoặc NO_GROUND nếu không có. */
+   private base(ix: number, iz: number): number {
+      const k = this.key(ix, iz);
+      let h = this._baseCache.get(k);
+      if (h === undefined) {
+         h = NO_GROUND;
+         const x = ix * this._cell;
+         const z = iz * this._cell;
+         for (const g of this._grounds) {
+            if (x >= g.minX && x <= g.maxX && z >= g.minZ && z <= g.maxZ && g.maxY > h) h = g.maxY;
+         }
+         this._baseCache.set(k, h);
+      }
+      return h;
+   }
+
+   /** Độ cao mặt trên của ô (ix, iz): nền + các khối đã xếp. NO_GROUND nếu ô không có nền. */
    private top(ix: number, iz: number): number {
+      const base = this.base(ix, iz);
+      if (base === NO_GROUND) return NO_GROUND;
       const col = this._columns.get(this.key(ix, iz));
-      return this.groundY + (col ? col.bodies.length : 0) * this._cubeH;
+      return base + (col ? col.bodies.length : 0) * this._cubeH;
    }
 
    // ---------------------------------------------------------------- mô phỏng
@@ -215,8 +302,11 @@ export class LitePhysics {
       let bx = 0;
       let bz = 0;
       let ties = 0;
+      // Ô bên cạnh không có nền (hố): chỉ khối đang xếp chồng (cao hơn nền của ô mình) mới trượt vào, khối nằm sát nền thì ở lại.
+      const floor = this.base(ix, iz);
       for (const [ox, oz] of NEIGHBORS) {
-         const t = this.top(ix + ox, iz + oz);
+         let t = this.top(ix + ox, iz + oz);
+         if (t === NO_GROUND) t = floor;
          if (t < best - 1e-4) {
             best = t;
             bx = ix + ox;
@@ -252,7 +342,7 @@ export class LitePhysics {
       }
       b.tx = ix * this._cell + (this.rand() - 0.5) * 2 * this.jitter;
       b.tz = iz * this._cell + (this.rand() - 0.5) * 2 * this.jitter;
-      b.ty = this.groundY + col.bodies.length * this._cubeH + b.half.y;
+      b.ty = this.base(ix, iz) + col.bodies.length * this._cubeH + b.half.y;
       col.bodies.push(b);
       b.column = col;
       b.vel.set(0, 0, 0);
@@ -261,25 +351,16 @@ export class LitePhysics {
       b.settleT = 0;
    }
 
-   private snapTarget(b: LiteBody) {
-      Quat.toEuler(_e, b.rot);
-      _e.set(Math.round(_e.x / 90) * 90, Math.round(_e.y / 90) * 90, Math.round(_e.z / 90) * 90);
-      Quat.fromEuler(_t, _e.x, _e.y, _e.z);
-   }
-
-   /** Kéo khối về giữa ô và xoay về góc 90°, rồi cho nằm yên. */
+   /** Kéo khối về giữa ô (giữ nguyên góc xoay hiện tại), rồi cho nằm yên. */
    private stepSettle(b: LiteBody, dt: number) {
       b.settleT += dt;
-      this.snapTarget(b);
       if (b.settleT >= this.settleTime) {
          b.pos.set(b.tx, b.ty, b.tz);
-         b.rot.set(_t);
          b.state = "rest";
          return;
       }
       const a = 1 - Math.exp(-dt * 30);
       b.pos.set(b.pos.x + (b.tx - b.pos.x) * a, b.pos.y + (b.ty - b.pos.y) * a, b.pos.z + (b.tz - b.pos.z) * a);
-      Quat.slerp(b.rot, b.rot, _t, a);
    }
 
    // ---------------------------------------------------------------- node

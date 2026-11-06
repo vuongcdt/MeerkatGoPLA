@@ -1,4 +1,5 @@
 import { Node, Quat, v3, Vec3 } from "cc";
+import { GroundBox } from "./GroundBox";
 
 /**
  * Body của SimplePhysics. Collider là hình cầu bao quanh khối (radius), nên các khối chồng lên nhau sẽ
@@ -16,8 +17,6 @@ export class PhysicsBody {
    /** Body đang ngủ: không tích phân, không ghi lại transform, chỉ được đánh thức khi có vật khác lao vào. */
    public asleep = false;
    public sleepTimer = 0;
-   /** true nếu phần xoay hiển thị đã về đúng góc 90° (không cần tính tiếp). */
-   public snapped = false;
    /** true nếu transform node cần được ghi lại ở frame này. */
    public dirty = true;
    /** Node cha có transform đơn vị nên dùng setPosition/setRotation (local) rẻ hơn setWorld*. */
@@ -32,8 +31,10 @@ export class PhysicsBody {
    }
 }
 
-/** Một điểm tiếp xúc: `a` = null nghĩa là mặt đất. Pháp tuyến n hướng từ a sang b. */
+/** Một điểm tiếp xúc: a = null nghĩa là box tĩnh (xem box). Pháp tuyến n hướng từ a sang b. */
 class Contact {
+   /** Box tĩnh đang tiếp xúc khi a = null. */
+   public box: GroundBox | null = null;
    public a: PhysicsBody | null = null;
    public b!: PhysicsBody;
    public nx = 0;
@@ -79,8 +80,6 @@ const FORWARD: ReadonlyArray<readonly [number, number, number]> = [
 ];
 
 const _q = new Quat();
-const _t = new Quat();
-const _e = new Vec3();
 const _axis = new Vec3();
 
 /**
@@ -93,15 +92,17 @@ const _axis = new Vec3();
 export class SimplePhysics {
    /** Gia tốc trọng trường theo trục Y. */
    public gravity = -10;
-   /** Độ cao mặt đất (world Y). */
-   public groundY = 0;
+   /** Body rơi thấp hơn độ cao này (world Y) thì bị gỡ khỏi mô phỏng (đã rơi khỏi ground). */
+   public killY = -30;
+   /** Gọi sau khi một body bị gỡ vì rơi xuống dưới killY (ví dụ để ẩn/hủy node). */
+   public onFall: ((node: Node) => void) | null = null;
    /** Độ nảy (0..1). */
    public restitution = 0.45;
    /** Va chạm chậm hơn ngưỡng này (m/s) thì không nảy, để vật nằm yên. */
    public bounceThreshold = 1;
    /** Ma sát giữa các khối. Thấp thì khối dễ trượt khỏi nhau (đống dẹt), cao thì đống dốc hơn. */
    public friction = 0.35;
-   /** Ma sát với mặt đất. */
+   /** Ma sát với box ground. */
    public groundFriction = 0.6;
    /** Cản tuyến tính mỗi giây (giống linearDamping của RigidBody). */
    public linearDamping = 0.1;
@@ -120,8 +121,6 @@ export class SimplePhysics {
    public maxSubSteps = 4;
    /** Chỉ mô phỏng khi true. */
    public running = false;
-   /** Tốc độ ease khi khối tự xoay về góc 90° gần nhất (1/s). */
-   public snapRate = 8;
    /** Khối chỉ lăn (xoay theo chuyển động) khi nhanh hơn ngưỡng này (m/s). */
    public rollSpeed = 0.4;
    /** Body chậm hơn ngưỡng này (m/s) liên tục `sleepTime` giây thì ngủ. */
@@ -132,6 +131,19 @@ export class SimplePhysics {
    public wakeSpeed = 0.3;
 
    private readonly _bodies: PhysicsBody[] = [];
+   private readonly _grounds: GroundBox[] = [];
+   /** Lưới ô của box tĩnh: key -> các box phủ ô đó. Cùng cạnh _cell với lưới body, dựng lại khi _cell đổi. */
+   private readonly _groundGrid = new Map<number, GroundBox[]>();
+   /** Box quá lớn (phủ nhiều ô) không đăng ký vào lưới mà xét trực tiếp. */
+   private readonly _bigGrounds: GroundBox[] = [];
+   private _groundDirty = false;
+   private _stamp = 0;
+   /** Pháp tuyến (hướng từ box ra body) do boxPenetration tính gần nhất. */
+   private _gnx = 0;
+   private _gny = 1;
+   private _gnz = 0;
+   /** Body vừa rơi xuống dưới killY trong substep hiện tại. */
+   private readonly _fallen: PhysicsBody[] = [];
    private readonly _grid = new Map<number, Cell>();
    private readonly _cells: Cell[] = [];
    private _cellCount = 0;
@@ -153,8 +165,45 @@ export class SimplePhysics {
       body.pos.z += (this.rand() - 0.5) * 2 * this.jitter;
       body.useLocal = this.parentIsIdentity(node);
       this._bodies.push(body);
-      this._cell = Math.max(this._cell, radius * 2 * 1.05);
+      const need = radius * 2 * 1.05;
+      if (need > this._cell) {
+         this._cell = need;
+         this._groundDirty = true; // cạnh ô đổi -> lưới ground phải dựng lại
+      }
       return body;
+   }
+
+   /** Thêm một box tĩnh làm ground, đọc từ node ở runtime (xem GroundBox). Chỗ nào không có box thì khối rơi tiếp. */
+   public addGround(node: Node, size?: Vec3, center?: Vec3): GroundBox {
+      const g = new GroundBox(node, size, center);
+      this._grounds.push(g);
+      this._groundDirty = true;
+      return g;
+   }
+
+   /** Gỡ box ground của node và đánh thức các khối để chúng rơi nếu mất chỗ đỡ. */
+   public removeGround(node: Node) {
+      const index = this._grounds.findIndex((g) => g.node === node);
+      if (index < 0) return;
+      this._grounds.splice(index, 1);
+      this._groundDirty = true;
+      this.wakeAll();
+   }
+
+   /** Tự đọc lại box của các node ground mỗi frame (ground bị di chuyển/đổi kích thước thì cập nhật). Tắt nếu ground chắc chắn đứng yên. */
+   public autoSyncGrounds = true;
+
+   /** Đọc lại box của mọi node ground; nếu có box đổi thì dựng lại lưới và đánh thức các khối. Trả về true nếu có thay đổi. */
+   public refreshGrounds(): boolean {
+      let changed = false;
+      for (const g of this._grounds) {
+         if (g.sync()) changed = true;
+      }
+      if (changed) {
+         this._groundDirty = true;
+         this.wakeAll();
+      }
+      return changed;
    }
 
    /** Gỡ body (ví dụ khi khối rơi vào lỗ) và đánh thức các body xung quanh vì chúng có thể mất chỗ đỡ. */
@@ -186,12 +235,18 @@ export class SimplePhysics {
 
    public clear() {
       this._bodies.length = 0;
+      this._grounds.length = 0;
+      this._groundGrid.clear();
+      this._bigGrounds.length = 0;
+      this._groundDirty = false;
       this._cell = 0;
       this._acc = 0;
    }
 
    public update(dt: number) {
       if (!this.running || this._bodies.length === 0) return;
+      if (this.autoSyncGrounds) this.refreshGrounds();
+      if (this._groundDirty) this.rebuildGrounds();
 
       this._acc = Math.min(this._acc + dt, this.fixedDt * this.maxSubSteps);
       while (this._acc >= this.fixedDt) {
@@ -270,14 +325,66 @@ export class SimplePhysics {
          b.pos.y += v.y * dt;
          b.pos.z += v.z * dt;
          b.dirty = true;
+         if (b.pos.y < this.killY) this._fallen.push(b); // gỡ sau khi hết substep (đang duyệt mảng)
       }
 
       for (let it = 0; it < this.positionIterations; it++) {
          for (let i = 0; i < this._contactCount; i++) this.solvePosition(this._active[i]);
       }
+
+      if (this._fallen.length > 0) {
+         for (const b of this._fallen) {
+            const index = this._bodies.indexOf(b);
+            if (index < 0) continue;
+            this._bodies[index] = this._bodies[this._bodies.length - 1];
+            this._bodies.pop();
+            this.onFall?.(b.node);
+         }
+         this._fallen.length = 0;
+      }
    }
 
    // ---------------------------------------------------------------- broadphase + narrowphase
+
+   /** Dựng lại lưới box tĩnh (khi thêm/gỡ/đọc lại box hoặc cạnh ô đổi). */
+   private rebuildGrounds() {
+      this._groundDirty = false;
+      this._groundGrid.clear();
+      this._bigGrounds.length = 0;
+      if (this._cell <= 0) return;
+      for (const g of this._grounds) this.insertGround(g);
+   }
+
+   /** Đăng ký box vào mọi voxel nó phủ. Box phủ quá nhiều voxel thì xét trực tiếp thay vì đăng ký. */
+   private insertGround(g: GroundBox) {
+      const s = this._cell;
+      const x0 = Math.floor(g.minX / s);
+      const x1 = Math.floor(g.maxX / s);
+      const y0 = Math.floor(g.minY / s);
+      const y1 = Math.floor(g.maxY / s);
+      const z0 = Math.floor(g.minZ / s);
+      const z1 = Math.floor(g.maxZ / s);
+      g.keys.length = 0;
+      g.big = (x1 - x0 + 1) * (y1 - y0 + 1) * (z1 - z0 + 1) > 4096;
+      if (g.big) {
+         this._bigGrounds.push(g);
+         return;
+      }
+      for (let x = x0; x <= x1; x++) {
+         for (let y = y0; y <= y1; y++) {
+            for (let z = z0; z <= z1; z++) {
+               const key = this.cellKey(x, y, z);
+               let list = this._groundGrid.get(key);
+               if (!list) {
+                  list = [];
+                  this._groundGrid.set(key, list);
+               }
+               list.push(g);
+               g.keys.push(key);
+            }
+         }
+      }
+   }
 
    private cellKey(cx: number, cy: number, cz: number): number {
       return ((cx + 512) * 1024 + (cy + 512)) * 1024 + (cz + 512);
@@ -288,6 +395,7 @@ export class SimplePhysics {
       if (!c) c = this._contacts[this._contactCount] = new Contact();
       this._contactCount++;
       c.bias = 0;
+      c.box = null;
       c.jn = 0;
       c.jtx = 0;
       c.jty = 0;
@@ -320,19 +428,8 @@ export class SimplePhysics {
          c.items.push(b);
          if (!b.asleep) c.awake++;
 
-         // Mặt đất (body đang ngủ trên đất không cần tiếp xúc).
-         if (!b.asleep && b.pos.y - b.halfY < this.groundY + this._margin) {
-            const g = this.nextContact();
-            g.a = null;
-            g.b = b;
-            g.nx = 0;
-            g.ny = 1;
-            g.nz = 0;
-            g.friction = this.groundFriction;
-            g.ima = 0;
-            g.imb = 1;
-            g.key = b.pos.y - 100;
-         }
+         // Box ground (body đang ngủ không cần tiếp xúc).
+         if (!b.asleep && this._grounds.length > 0) this.groundContacts(b);
       }
 
       for (let i = 0; i < this._cellCount; i++) {
@@ -359,6 +456,118 @@ export class SimplePhysics {
       active.length = this._contactCount;
       for (let i = 0; i < this._contactCount; i++) active[i] = this._contacts[i];
       active.sort((p, q) => p.key - q.key);
+   }
+
+   /** Tạo tiếp xúc giữa body và các box ground nằm trong các voxel mà hình cầu (bán kính halfY) chạm tới. */
+   private groundContacts(b: PhysicsBody) {
+      const s = this._cell;
+      const reach = b.halfY + this._margin;
+      const stamp = ++this._stamp;
+      const x0 = Math.floor((b.pos.x - reach) / s);
+      const x1 = Math.floor((b.pos.x + reach) / s);
+      const y0 = Math.floor((b.pos.y - reach) / s);
+      const y1 = Math.floor((b.pos.y + reach) / s);
+      const z0 = Math.floor((b.pos.z - reach) / s);
+      const z1 = Math.floor((b.pos.z + reach) / s);
+
+      for (let x = x0; x <= x1; x++) {
+         for (let y = y0; y <= y1; y++) {
+            for (let z = z0; z <= z1; z++) {
+               const list = this._groundGrid.get(this.cellKey(x, y, z));
+               if (!list) continue;
+               for (let i = 0; i < list.length; i++) {
+                  const g = list[i];
+                  if (g.stamp !== stamp) {
+                     g.stamp = stamp;
+                     this.groundContact(b, g);
+                  }
+               }
+            }
+         }
+      }
+      for (let i = 0; i < this._bigGrounds.length; i++) this.groundContact(b, this._bigGrounds[i]);
+   }
+
+   private groundContact(b: PhysicsBody, box: GroundBox) {
+      if (this.boxPenetration(b, box) < -this._margin) return;
+      const c = this.nextContact();
+      c.a = null;
+      c.b = b;
+      c.box = box;
+      c.nx = this._gnx;
+      c.ny = this._gny;
+      c.nz = this._gnz;
+      c.friction = this.groundFriction;
+      c.ima = 0;
+      c.imb = 1;
+      c.key = b.pos.y - 100;
+   }
+
+   /**
+    * Độ lún của body (hình cầu bán kính halfY) vào box: dương = đang lún, âm = còn cách box.
+    * Ghi pháp tuyến (từ box ra body) vào _gnx/_gny/_gnz. Tâm nằm trong box thì đẩy ra mặt gần nhất (ưu tiên mặt trên).
+    */
+   private boxPenetration(b: PhysicsBody, box: GroundBox): number {
+      const px = b.pos.x;
+      const py = b.pos.y;
+      const pz = b.pos.z;
+      const qx = px < box.minX ? box.minX : px > box.maxX ? box.maxX : px;
+      const qy = py < box.minY ? box.minY : py > box.maxY ? box.maxY : py;
+      const qz = pz < box.minZ ? box.minZ : pz > box.maxZ ? box.maxZ : pz;
+      const dx = px - qx;
+      const dy = py - qy;
+      const dz = pz - qz;
+      const d2 = dx * dx + dy * dy + dz * dz;
+
+      if (d2 > 1e-12) {
+         const d = Math.sqrt(d2);
+         this._gnx = dx / d;
+         this._gny = dy / d;
+         this._gnz = dz / d;
+         return b.halfY - d;
+      }
+
+      // Tâm nằm trong box: tìm mặt gần nhất để đẩy ra.
+      const up = box.maxY - py;
+      let best = up;
+      let nx = 0;
+      let ny = 1;
+      let nz = 0;
+      const down = py - box.minY;
+      if (down < best) {
+         best = down;
+         ny = -1;
+      }
+      const lx = px - box.minX;
+      if (lx < best) {
+         best = lx;
+         nx = -1;
+         ny = 0;
+      }
+      const rx = box.maxX - px;
+      if (rx < best) {
+         best = rx;
+         nx = 1;
+         ny = 0;
+      }
+      const lz = pz - box.minZ;
+      if (lz < best) {
+         best = lz;
+         nx = 0;
+         ny = 0;
+         nz = -1;
+      }
+      const rz = box.maxZ - pz;
+      if (rz < best) {
+         best = rz;
+         nx = 0;
+         ny = 0;
+         nz = 1;
+      }
+      this._gnx = nx;
+      this._gny = ny;
+      this._gnz = nz;
+      return b.halfY + best;
    }
 
    private collide(a: PhysicsBody, b: PhysicsBody) {
@@ -466,8 +675,12 @@ export class SimplePhysics {
       const a = c.a;
       const b = c.b;
       if (!a) {
-         const pen = this.groundY - (b.pos.y - b.halfY);
-         if (pen > this._slop) b.pos.y += (pen - this._slop) * 0.8;
+         if (!c.box) return;
+         const pen = this.boxPenetration(b, c.box);
+         if (pen > this._slop) {
+            const corr = (pen - this._slop) * 0.8;
+            b.pos.set(b.pos.x + this._gnx * corr, b.pos.y + this._gny * corr, b.pos.z + this._gnz * corr);
+         }
          return;
       }
 
@@ -492,37 +705,18 @@ export class SimplePhysics {
 
    // ---------------------------------------------------------------- hiển thị
 
-   private snapTarget(b: PhysicsBody) {
-      Quat.toEuler(_e, b.rot);
-      _e.set(Math.round(_e.x / 90) * 90, Math.round(_e.y / 90) * 90, Math.round(_e.z / 90) * 90);
-      Quat.fromEuler(_t, _e.x, _e.y, _e.z);
-   }
-
    private updateVisual(b: PhysicsBody, dt: number) {
       if (b.asleep) {
-         // Lần ghi cuối: chốt đúng góc 90° rồi không đụng tới node nữa cho tới khi được đánh thức.
-         if (!b.snapped) {
-            this.snapTarget(b);
-            b.rot.set(_t);
-            b.snapped = true;
-         }
+         // Lần ghi cuối: giữ nguyên góc hiện tại rồi không đụng tới node nữa cho tới khi được đánh thức.
          b.dirty = false;
       } else {
+         // Chỉ lăn theo chuyển động khi đủ nhanh; chậm hơn thì giữ nguyên góc (không về 90°).
          const sp = Math.hypot(b.vel.x, b.vel.z);
          if (sp > this.rollSpeed) {
             // Lăn: ω = up x v / r
             Vec3.set(_axis, b.vel.z / sp, 0, -b.vel.x / sp);
             Quat.fromAxisAngle(_q, _axis, (sp / b.radius) * dt);
             Quat.multiply(b.rot, _q, b.rot);
-            b.snapped = false;
-         } else if (!b.snapped) {
-            // Về góc 90° gần nhất.
-            this.snapTarget(b);
-            Quat.slerp(b.rot, b.rot, _t, 1 - Math.exp(-this.snapRate * dt));
-            if (Math.abs(Quat.dot(b.rot, _t)) > 0.99999) {
-               b.rot.set(_t);
-               b.snapped = true;
-            }
          }
       }
 
