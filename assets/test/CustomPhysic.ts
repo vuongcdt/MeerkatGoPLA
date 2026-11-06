@@ -40,8 +40,8 @@ export class CustomPhysic {
       this.size = size.y;
       const radius = Math.max(size.x, size.y, size.z) * 0.5;
       const body = new PhysicsBody(node, radius, size.y * 0.5);
-      const key = this.getKey(v3(node.worldPosition).multiplyScalar(1 / this.size));
-      const value = this._voxel.get(key) ?? new Set<PhysicsBody>();
+      const key = this.getKey(v3(node.worldPosition));
+      const value = this.getVoxel(key);
 
       value.add(body);
       this._voxel.set(key, value);
@@ -69,29 +69,53 @@ export class CustomPhysic {
          }
 
          const voxelKey = this.getKey(b.pos);
-         const voxel = this._voxel.get(voxelKey) ?? new Set<PhysicsBody>();
+         const voxel = this.getVoxel(voxelKey);
 
-         if (voxel.size > 1) {
-            b.vel.y = 0;
-            continue;
+         // Vị trí kế tiếp và độ cao có thể đáp xuống (đất hoặc đỉnh cube đang nằm yên ngay bên dưới).
+         const next = v3(b.pos).add(v3(b.vel).multiplyScalar(dt));
+         let landY = -Infinity;
+         const bottom = next.y - b.halfY;
+
+         if (bottom <= 0) {
+            landY = b.halfY;
+         } else {
+            const below = this._voxel.get(this.getKey(v3(next.x, bottom, next.z)));
+
+            if (below) {
+               for (const o of below) {
+                  if (o !== b && o.asleep) {
+                     landY = Math.max(landY, o.pos.y + this.size);
+                  }
+               }
+            }
          }
 
-         if (b.pos.y >= b.halfY) {
-            b.pos.add(v3(b.vel).multiplyScalar(dt));
-            b.node.worldPosition = b.pos;
-            b.node.worldRotation = b.rot;
-            b.dirty = true;
+         if (landY > -Infinity) {
+            next.y = landY;
+            b.vel.set(0, 0, 0);
+            b.asleep = true;
          }
+
+         b.pos.set(next);
+         b.node.worldPosition = b.pos;
 
          const newKey = this.getKey(b.pos);
 
-         if (newKey !== voxelKey[0]) {
+         if (newKey !== voxelKey) {
             voxel.delete(b);
-            const newValue = this._voxel.get(newKey) ?? new Set<PhysicsBody>();
+            const newValue = this.getVoxel(newKey);
             newValue.add(b);
             this._voxel.set(newKey, newValue);
          }
       }
+   }
+
+   private getVoxel(voxelKey: number) {
+      const voxel = this._voxel.get(voxelKey) ?? new Set<PhysicsBody>();
+      if (voxel.size === 0) {
+         this._voxel.set(voxelKey, voxel);
+      }
+      return voxel;
    }
 
    private getKey(pos: Vec3) {
